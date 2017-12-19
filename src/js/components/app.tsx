@@ -3,7 +3,7 @@ import * as React from "react";
 export class App extends React.PureComponent<{}> {
     render() {
         return <div>
-        Hello
+        Hello there dfasdf
         </div>
 
     }

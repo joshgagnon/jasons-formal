@@ -5,7 +5,7 @@
   "engines": {},
   "main": "",
   "scripts": {
-    "dev": "node ./node_modules/webpack-dev-server/bin/webpack-dev-server.js",
+    "dev": "node ./node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline",
     "build": "NODE_ENV=production webpack -p ",
     "run": "BLUEBIRD_WARNINGS=0 sails lift",
     "test-coverage": "BLUEBIRD_WARNINGS=0 NODE_ENV=test nyc --reporter=html --reporter=text  _mocha -- --recursive test --compilers js:babel-core/register --timeout 45000",

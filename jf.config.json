@@ -1,0 +1,9 @@
+{
+    "apps" : [{
+        "name": "jasons-formal",
+        "script": "server.js",
+        "env": {
+            "NODE_ENV": "production",
+        }
+    }]
+}
