@@ -2,6 +2,16 @@ declare let DEV : boolean;
 
 declare namespace Jason {
 
+    interface Schema {
+        definitions: any,
+        properties: any,
+    }
+
+    interface TemplateSchemas {
+        [category: string] : {
+            [schema: string] : Schema
+        }
+    }
 }
 
 declare module "*.json" {

@@ -19,7 +19,7 @@ function loadAll(context: any) : {[key: string] : any}{
 
 
 
-const templateSchemas = {
+const templateSchemas : Jason.TemplateSchemas = {
     'Good Companies': loadAll(gc)
 }
 
