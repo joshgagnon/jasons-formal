@@ -2,9 +2,15 @@ declare let DEV : boolean;
 
 declare namespace Jason {
 
+    interface SchemaProperties {
+        title?: string
+    }
+
     interface Schema {
+        title?: string;
+        description?: string;
         definitions: any,
-        properties: any,
+        properties: SchemaProperties & any,
     }
 
     interface TemplateSchemas {
