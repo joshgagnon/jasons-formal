@@ -16,7 +16,7 @@ class RenderField extends React.PureComponent<{field: any, name: string}> {
                     </FormSection>
             }
             case 'array': {
-                return <FieldArray baseName={name} name={name} component={FieldsArray} field={field.items} /> 
+                return <FieldArray  name={name} component={FieldsArray} field={field.items} /> 
             }
             case 'string': {
                 return <FieldRow title={title} name={name} component={TextField} />
@@ -40,7 +40,7 @@ class RenderField extends React.PureComponent<{field: any, name: string}> {
 class FieldsArray extends React.PureComponent<any>{
     render() {
         //(props: {name: string, fields: any[], field: any}) : JSX.Element {
-        const { fields, field, baseName } = this.props;
+        const { fields, field } = this.props;
         return <fieldset className="list">
             { fields.map((name: any, index: number) => {
                 
