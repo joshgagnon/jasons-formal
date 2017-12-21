@@ -44,7 +44,7 @@ class FieldsArray extends React.PureComponent<any>{
         return <fieldset className="list">
             { fields.map((name: any, index: number) => {
                 
-                return <RenderField key={index} name={`${baseName}.${name}`} field={field.properties}/>
+                return <RenderField key={index} name={name} field={field}/>
             }) }
             <button type="button" onClick={() => fields.push({})}>
             Add
