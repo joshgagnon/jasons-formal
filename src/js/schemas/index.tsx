@@ -1,6 +1,7 @@
 import { prepareSchema } from 'json-schemer';
 import merge from 'deepmerge';
 const gc = require.context('good-companies-templates/schemas');
+const el = require.context('el-templates/schemas');
 
 function loadAll(context: any) : {[key: string] : any}{
     const definitions = context('./definitions');
@@ -20,7 +21,8 @@ function loadAll(context: any) : {[key: string] : any}{
 
 
 const templateSchemas : Jason.TemplateSchemas = {
-    'Good Companies': loadAll(gc)
+    'Good Companies': loadAll(gc),
+    'Evolution': loadAll(el)
 }
 
 export default templateSchemas;
