@@ -1,5 +1,5 @@
 import * as React from "react";
-import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray } from 'redux-form';
+import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, change } from 'redux-form';
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
 import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab } from 'react-bootstrap';
@@ -178,41 +178,57 @@ class SchemaField extends React.PureComponent<WrappedFieldProps & {category: str
 
 const SchemaFieldWithCategory = formValues<any>('category')(SchemaField);
 
+type FormLoaderProps = InjectedFormProps & { category: string; schema: string; }
 
-export class FormLoader extends React.PureComponent<InjectedFormProps> {
+export class FormLoader extends React.PureComponent<FormLoaderProps> {
+    constructor(props: FormLoaderProps) {
+        super(props);
+
+        this.categoryChange = this.categoryChange.bind(this);
+    }
+
+    categoryChange(event: any, newCatergory: any) {
+        const newSchemaName = Object.keys(templateSchemas[newCatergory])[0];
+        this.props.change('schema', newSchemaName);
+    }
+
     render() {
-        return<div>
-        <Grid>
-        <Form  horizontal>
-            <FormGroup controlId="formControlsSelect">
-                <Col sm={2}>
-                    <ControlLabel>Category</ControlLabel>
-                </Col>
-                <Col sm={10}>
-                    <Field name="category" component={SelectField as any}>
-                        { Object.keys(templateSchemas).map((key: string) => {
-                            return <option key={key} value={key}>{ key }</option>
-                        }) }
-                    </Field>
-                </Col>
-            </FormGroup>
-            <FormGroup controlId="formControlsSelect">
-                <Col sm={2}>
-                    <ControlLabel>Schema</ControlLabel>
-                </Col>
-                <Col sm={10}>
-                    <Field name="schema" component={SchemaFieldWithCategory as any} />
-                </Col>
-            </FormGroup>
-        </Form>
-    </Grid>
-        <InjectedTemplateViews />
-    </div>
+        return (
+            <div>
+                <Grid>
+                    <Form  horizontal>
+                        <FormGroup controlId="formControlsSelect">
+                            <Col sm={2}>
+                                <ControlLabel>Category</ControlLabel>
+                            </Col>
+                            <Col sm={10}>
+                                <Field name="category" component={SelectField as any} onChange={this.categoryChange}>
+                                    { Object.keys(templateSchemas).map((key: string) => {
+                                        return <option key={key} value={key}>{ key }</option>
+                                    }) }
+                                </Field>
+                            </Col>
+                        </FormGroup>
+                        <FormGroup controlId="formControlsSelect">
+                            <Col sm={2}>
+                                <ControlLabel>Schema</ControlLabel>
+                            </Col>
+                            <Col sm={10}>
+                                <Field name="schema" component={SchemaFieldWithCategory as any} />
+                            </Col>
+                        </FormGroup>
+                    </Form>
+                </Grid>
+                {!!templateSchemas[this.props.category][this.props.schema] && <InjectedTemplateViews />}
+            </div>
+        );
     }
 }
 
+const FormLoaderWithCategoryAndSchema = formValues<any>('category', 'schema')(FormLoader);
 
-export default reduxForm<{}>({
-    form: 'formLoader', 
-})(FormLoader);
+export default reduxForm<{}>(
+    { form: 'formLoader' },
+    { change}
+)(FormLoaderWithCategoryAndSchema);
 
