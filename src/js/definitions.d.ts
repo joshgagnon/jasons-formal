@@ -27,6 +27,9 @@ declare module "*.json" {
 
 declare module 'json-schemer' {
     export function prepareSchema(definitions: any, schemas: any): any;
+    export function componentType(object: any): string;
+    export function getKey(): string;
+    export function addItem(field: any): string;
 }
 
 declare module 'deepmerge' {

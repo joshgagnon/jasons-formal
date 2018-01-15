@@ -1,15 +1,16 @@
 import * as React from "react";
-import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray } from 'redux-form';
+import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector } from 'redux-form';
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
-import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab } from 'react-bootstrap';
+import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon } from 'react-bootstrap';
+import { componentType, getKey, addItem } from 'json-schemer';
+import FlipMove from 'react-flip-move';
 
 
 class RenderField extends React.PureComponent<{field: any, name: string}> {
     render() {
         const { name, field } = this.props;
         const title = field.title;
-        console.log(this.props.field)
         switch(field.type){
             case 'object': {
                 return <FormSection name={name}>
@@ -17,10 +18,16 @@ class RenderField extends React.PureComponent<{field: any, name: string}> {
                     </FormSection>
             }
             case 'array': {
-                return <FieldArray  name={name} component={FieldsArray} props={{field: field.items}} />
+                return <FieldArray name={name} component={FieldsArray} props={{field: field.items, title: field.title}} />
             }
             case 'string': {
-                return <FieldRow title={title} name={name} component={TextField} />
+                const subType = componentType(field);
+                switch(subType){
+                    case 'textarea':
+                        return <FieldRow title={title} name={name} component={TextAreaField} />
+                    default:
+                        return <FieldRow title={title} name={name} component={TextField} />
+                }
             }
             case undefined: {
                 if(field.enum){
@@ -35,21 +42,93 @@ class RenderField extends React.PureComponent<{field: any, name: string}> {
 
         return false;
     }
-
 }
 
-class FieldsArray extends React.PureComponent<any>{
+class MoveUpButton extends React.PureComponent<any>{
+    render(){
+        const { swapFields, index, numItems, forceDisplay } = this.props;
+        const disabled = index === 0;
+
+        if (disabled && !forceDisplay) {
+            return false;
+        }
+
+        return(
+            <button type="button" className="btn btn-default" onClick={() => swapFields(index, index - 1)} disabled={disabled}>
+                <Glyphicon glyph="arrow-up"/>
+            </button>
+        );
+    }
+}
+
+class MoveDownButton extends React.PureComponent<any>{
+    render(){
+        const { swapFields, index, numItems, forceDisplay } = this.props;
+        const disabled = index + 1 === numItems;
+
+        if (disabled && !forceDisplay) {
+            return false;
+        }
+
+        return (
+            <button type="button" className="btn btn-default" onClick={() => swapFields(index, index + 1)} disabled={disabled}>
+                <Glyphicon glyph="arrow-down"/>
+            </button>
+        );
+    }
+}
+class RemoveButton extends React.PureComponent<any>{
+    render(){
+        const { index, numItems, minItems, forceDisplay, removeField } = this.props;
+        const disabled = minItems >= numItems;
+
+        if (disabled && !forceDisplay) {
+            return false;
+        }
+
+        return (
+            <button type="button" className="btn btn-default" onClick={() => removeField(index)} disabled={disabled}>
+                <Glyphicon glyph="remove"/>
+            </button>
+        );
+    }
+}
+
+
+
+class ListItemControls extends React.PureComponent<any> {
     render() {
-        //(props: {name: string, fields: any[], field: any}) : JSX.Element {
-        const { fields, field } = this.props;
+        const { index, numItems, fields: { swap, remove }} = this.props;
+        return <div>
+            <MoveUpButton key={0} index={index} swapFields={swap} numItems={numItems} forceDisplay={true} />
+            <MoveDownButton key={1} index={index} swapFields={swap} numItems={numItems} forceDisplay={true} />
+            <RemoveButton key={2} index={index} removeField={remove} numItems={numItems} forceDisplay={true} />
+            </div>
+
+    }
+}
+
+
+/*@connect((state, ownProps) => ({
+    name
+}))*/
+class FieldsArray extends React.PureComponent<any> {
+    render() {
+        const { fields, field, title } = this.props;
+        console.log(this.props)
         return <fieldset className="list">
-            { field.title && <legend>{field.title}</legend>}
+            { title && <legend>{ title }</legend>}
+            <FlipMove duration={250} easing="ease-out">
             { fields.map((name: any, index: number) => {
-                return <RenderField key={index} name={name} field={field} />
+                return <div key={fields.get(index)._keyIndex}>
+                    <RenderField  name={name} field={field} />
+                    <ListItemControls fields={fields} index={index} numItems={fields.length} name={name}/>
+                    </div>
             }) }
-            <button type="button" onClick={() => fields.push({})}>
-            Add
-          </button>
+            </FlipMove>
+            <Button onClick={() => fields.push({_keyIndex: getKey()})}>
+            { addItem(field) }
+          </Button>
             </fieldset>
         }
 }
@@ -165,6 +244,11 @@ class TextField extends React.PureComponent<WrappedFieldProps> {
     }
 }
 
+class TextAreaField extends React.PureComponent<WrappedFieldProps> {
+    render() {
+        return <FormControl {...this.props.input} componentClass="textarea" />
+    }
+}
 
 class SchemaField extends React.PureComponent<WrappedFieldProps & {category: string}> {
     render() {
