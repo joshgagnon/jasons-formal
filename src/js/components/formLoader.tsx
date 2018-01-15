@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
 import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab } from 'react-bootstrap';
 
+
 class RenderField extends React.PureComponent<{field: any, name: string}> {
     render() {
         const { name, field } = this.props;
@@ -16,7 +17,7 @@ class RenderField extends React.PureComponent<{field: any, name: string}> {
                     </FormSection>
             }
             case 'array': {
-                return <FieldArray  name={name} component={FieldsArray} field={field.items} /> 
+                return <FieldArray  name={name} component={FieldsArray} props={{field: field.items}} />
             }
             case 'string': {
                 return <FieldRow title={title} name={name} component={TextField} />
@@ -42,9 +43,9 @@ class FieldsArray extends React.PureComponent<any>{
         //(props: {name: string, fields: any[], field: any}) : JSX.Element {
         const { fields, field } = this.props;
         return <fieldset className="list">
+            { field.title && <legend>{field.title}</legend>}
             { fields.map((name: any, index: number) => {
-                
-                return <RenderField key={index} name={name} field={field}/>
+                return <RenderField key={index} name={name} field={field} />
             }) }
             <button type="button" onClick={() => fields.push({})}>
             Add
@@ -67,8 +68,7 @@ function FieldRow(props: {title: string, name: string, component: any, children?
                 { children }
             </Field>
         </Col>
-
-    </FormGroup> 
+    </FormGroup>
 }
 
 
@@ -213,6 +213,6 @@ export class FormLoader extends React.PureComponent<InjectedFormProps> {
 
 
 export default reduxForm<{}>({
-    form: 'formLoader', 
+    form: 'formLoader',
 })(FormLoader);
 
