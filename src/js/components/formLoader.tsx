@@ -99,7 +99,7 @@ class RemoveButton extends React.PureComponent<any>{
 class ListItemControls extends React.PureComponent<any> {
     render() {
         const { index, numItems, fields: { swap, remove }} = this.props;
-        return <div>
+        return <div className="btn-group-vertical btn-group-xs" style={{position: 'absolute', right: 0, top: 0}}>
             <MoveUpButton key={0} index={index} swapFields={swap} numItems={numItems} forceDisplay={true} />
             <MoveDownButton key={1} index={index} swapFields={swap} numItems={numItems} forceDisplay={true} />
             <RemoveButton key={2} index={index} removeField={remove} numItems={numItems} forceDisplay={true} />
@@ -121,8 +121,10 @@ class FieldsArray extends React.PureComponent<any> {
             <FlipMove duration={250} easing="ease-out">
             { fields.map((name: any, index: number) => {
                 return <div key={fields.get(index)._keyIndex}>
+                    <div style={{position: 'relative', minHeight: 70}}>
                     <RenderField  name={name} field={field} />
                     <ListItemControls fields={fields} index={index} numItems={fields.length} name={name}/>
+                    </div>
                     </div>
             }) }
             </FlipMove>
@@ -139,10 +141,10 @@ class FieldsArray extends React.PureComponent<any> {
 function FieldRow(props: {title: string, name: string, component: any, children? : any}) : JSX.Element{
     const {title, name, component, children } = props;
     return <FormGroup>
-        <Col sm={2}>
+        <Col sm={3} className="text-right">
             <ControlLabel>{title}</ControlLabel>
         </Col>
-        <Col sm={10}>
+        <Col sm={7}>
             <Field name={name} component={component as any}>
                 { children }
             </Field>
