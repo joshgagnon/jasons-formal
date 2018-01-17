@@ -3,7 +3,7 @@ import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, For
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
 import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon } from 'react-bootstrap';
-import { componentType, getKey, addItem } from 'json-schemer';
+import { componentType, getKey, addItem, setDefaults } from 'json-schemer';
 import FlipMove from 'react-flip-move';
 
 
@@ -90,6 +90,7 @@ class RenderField extends React.PureComponent<{field: any, name: string, selecto
                 // the > 1 check is a easy way to not render the oneOf match structures (causes a duplication of the field)
                 if(field.enum && field.enum.length > 1){
                     return <FieldRow title={title} name={name} component={SelectField}>
+                         <option value="" disabled>Please Select...</option>
                         { field.enum.map((f: string, i: number) => {
                             return <option key={i} value={f}>{field.enumNames ? field.enumNames[i] : f}</option>
                         })}
@@ -239,7 +240,7 @@ class SchemaView extends React.PureComponent<{schema: Jason.Schema}> {
 class FormView extends React.PureComponent<{schema: Jason.Schema, name: string}> {
     render() {
         return <div>
-            <InjectedRenderForm schema={this.props.schema} form={this.props.name} />
+            <InjectedRenderForm schema={this.props.schema} form={this.props.name} key={this.props.name} />
         </div>
     }
 }
@@ -290,7 +291,7 @@ class SchemaField extends React.PureComponent<WrappedFieldProps & {category: str
     render() {
         return <SelectField meta={this.props.meta} input={this.props.input}>
             { Object.keys(templateSchemas[this.props.category]).map((key: string) => {
-                return <option key={key} value={key}>{ key }</option>
+                return <option key={key} value={key}>{ templateSchemas[this.props.category][key].title }</option>
             }) }
         </SelectField>
     }

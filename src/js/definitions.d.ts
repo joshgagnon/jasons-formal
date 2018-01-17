@@ -35,6 +35,7 @@ declare module 'json-schemer' {
     export function componentType(object: any): string;
     export function getKey(): string;
     export function addItem(field: any): string;
+    export function setDefaults(schema: Jason.Schema, context: any, values: any): any;
 }
 
 declare module 'deepmerge' {
