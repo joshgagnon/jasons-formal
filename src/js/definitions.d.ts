@@ -3,7 +3,7 @@ declare let DEV : boolean;
 declare namespace Jason {
 
     interface SchemaProperties {
-        title?: string
+        title?: string,
     }
 
     interface Schema {
@@ -11,12 +11,17 @@ declare namespace Jason {
         description?: string;
         definitions: any,
         properties: SchemaProperties & any,
+        oneOf?: any[]
     }
 
     interface TemplateSchemas {
         [category: string] : {
             [schema: string] : Schema
         }
+    }
+
+    interface State {
+
     }
 }
 

@@ -7,18 +7,75 @@ import { componentType, getKey, addItem } from 'json-schemer';
 import FlipMove from 'react-flip-move';
 
 
-class RenderField extends React.PureComponent<{field: any, name: string}> {
+type SelectorType = (state: any, ...field: string[]) => any;
+
+interface FormSetProps {
+    schema: Jason.Schema,
+    subSchema?: Jason.Schema
+    name?: string,
+    selector: SelectorType
+}
+
+
+class UnconnectedFormSet extends React.PureComponent<FormSetProps> {
     render() {
-        const { name, field } = this.props;
+        const { schema, subSchema, selector } = this.props;
+        const { properties, title } = schema;
+        const schemaProps = properties;
+
+        return (
+            <fieldset>
+             { title && <legend>{title}</legend>}
+                { Object.keys(schemaProps).map((key, i) => {
+                    return <RenderField key={i} field={schemaProps[key]} name={key} selector={selector}/>
+                }) }
+                { subSchema && <FormSet schema={subSchema} name={this.props.name} selector={selector} /> }
+            </fieldset>
+        );
+
+    }
+}
+
+const FormSet = connect<{}, {}, FormSetProps>((state: Jason.State, ownProps: FormSetProps) => {
+    if(ownProps.schema.oneOf) {
+        const getMatchingOneOf = (oneOfs: any, value: any, key: string) => {
+            return oneOfs.filter((x : Jason.Schema) => x.properties[key].enum[0] === value)[0] || {};
+        };
+        let selectKey;
+        const { properties } = ownProps.schema;
+        Object.keys(properties).map((key, i) => {
+            if(properties[key].enum){
+                selectKey = key;
+            }
+        });
+        if(selectKey){
+            const value = (ownProps.selector(state, ownProps.name) || {})[selectKey];
+            if(value){
+                return {
+                    subSchema: getMatchingOneOf(ownProps.schema.oneOf, value, selectKey)
+                }
+            }
+        }
+
+    }
+    return {
+
+    }
+})(UnconnectedFormSet as any);
+
+
+class RenderField extends React.PureComponent<{field: any, name: string, selector: (name: any) => any}> {
+    render() : false | JSX.Element {
+        const { name, field, selector } = this.props;
         const title = field.title;
         switch(field.type){
             case 'object': {
                 return <FormSection name={name}>
-                    { renderFormSet(this.props.field as Jason.Schema) }
+                        <FormSet schema={(this.props.field as Jason.Schema)} name={name} selector={selector}/>
                     </FormSection>
             }
             case 'array': {
-                return <FieldArray name={name} component={FieldsArray} props={{field: field.items, title: field.title}} />
+                return <FieldArray name={name} component={FieldsArray} props={{field: field.items, title: field.title, selector}} />
             }
             case 'string': {
                 const subType = componentType(field);
@@ -30,7 +87,8 @@ class RenderField extends React.PureComponent<{field: any, name: string}> {
                 }
             }
             case undefined: {
-                if(field.enum){
+                // the > 1 check is a easy way to not render the oneOf match structures (causes a duplication of the field)
+                if(field.enum && field.enum.length > 1){
                     return <FieldRow title={title} name={name} component={SelectField}>
                         { field.enum.map((f: string, i: number) => {
                             return <option key={i} value={f}>{field.enumNames ? field.enumNames[i] : f}</option>
@@ -44,8 +102,8 @@ class RenderField extends React.PureComponent<{field: any, name: string}> {
     }
 }
 
-class MoveUpButton extends React.PureComponent<any>{
-    render(){
+class MoveUpButton extends React.PureComponent<any> {
+    render() {
         const { swapFields, index, numItems, forceDisplay } = this.props;
         const disabled = index === 0;
 
@@ -109,28 +167,26 @@ class ListItemControls extends React.PureComponent<any> {
 }
 
 
-/*@connect((state, ownProps) => ({
-    name
-}))*/
 class FieldsArray extends React.PureComponent<any> {
     render() {
-        const { fields, field, title } = this.props;
-        console.log(this.props)
+        const { fields, field, title, selector } = this.props;
         return <fieldset className="list">
             { title && <legend>{ title }</legend>}
             <FlipMove duration={250} easing="ease-out">
             { fields.map((name: any, index: number) => {
                 return <div key={fields.get(index)._keyIndex}>
                     <div style={{position: 'relative', minHeight: 70}}>
-                    <RenderField  name={name} field={field} />
+                    <RenderField  name={name} field={field} selector={selector} />
                     <ListItemControls fields={fields} index={index} numItems={fields.length} name={name}/>
                     </div>
                     </div>
             }) }
             </FlipMove>
+            <div className="text-center">
             <Button onClick={() => fields.push({_keyIndex: getKey()})}>
             { addItem(field) }
           </Button>
+          </div>
             </fieldset>
         }
 }
@@ -153,28 +209,6 @@ function FieldRow(props: {title: string, name: string, component: any, children?
 }
 
 
-function renderFormSet(schema: Jason.Schema) : JSX.Element {
-    const { properties, title } = schema;
-    const schemaProps = properties;
-    /*const getMatchingOneOf = (value: any, key: string) => {
-        return (oneOfs.filter(x => x.properties[key].enum[0] === value)[0] || {}).properties || {};
-    };*/
-    let selectKey;
-    Object.keys(schemaProps).map((key, i) => {
-        if(schemaProps[key].enum){
-            selectKey = key;
-        }
-    });
-    return (
-        <fieldset>
-         { title && <legend>{title}</legend>}
-            { Object.keys(schemaProps).map((key, i) => {
-                return <RenderField key={i} field={schemaProps[key]} name={key}/>
-            }) }
-            { /*oneOfs && selectKey && fields[selectKey] && renderFormSet(getMatchingOneOf(fields[selectKey].value, selectKey), fields, null, null, ) */ }
-        </fieldset>
-    );
-}
 
 
 
@@ -183,9 +217,9 @@ class RenderForm extends React.PureComponent<InjectedFormProps & {schema: Jason.
     render() {
         const { schema } = this.props;
         return <Form horizontal>
-                { renderFormSet(schema) }
+                <FormSet schema={schema} selector={formValueSelector(this.props.form)} />
                 { this.props.error && <div className="alert alert-danger">
-                    { this.props.error }
+                { this.props.error }
                 </div> }
         </Form>
     }
@@ -267,7 +301,7 @@ const SchemaFieldWithCategory = formValues<any>('category')(SchemaField);
 
 export class FormLoader extends React.PureComponent<InjectedFormProps> {
     render() {
-        return<div>
+        return <div>
         <Grid>
         <Form  horizontal>
             <FormGroup controlId="formControlsSelect">
