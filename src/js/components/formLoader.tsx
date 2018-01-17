@@ -1,5 +1,5 @@
 import * as React from "react";
-import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector } from 'redux-form';
+import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector, getFormValues } from 'redux-form';
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
 import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon } from 'react-bootstrap';
@@ -248,12 +248,14 @@ class FormView extends React.PureComponent<{schema: Jason.Schema, name: string}>
 
 interface UnconnectedPreviewProps {
    category: string,
-   schema: string,
-   name: string
+   schemaName: string,
+   form: string,
+   selector: SelectorType
 }
 
 interface PreviewProps extends UnconnectedPreviewProps {
-     render: (data: Jason.Actions.RenderPayload) => void
+     render: (data: Jason.Actions.RenderPayload) => void,
+     getValues: () => any,
 }
 
 export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
@@ -262,9 +264,20 @@ export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
         this.submit = this.submit.bind(this);
     }
 
+    buildRenderObject(values : any, metadata = {}) {
+        const schema = templateSchemas[this.props.category].schemas[this.props.schemaName];
+        const filename = schema.title;
+        return {
+            formName: schema.formName,
+            templateTitle: schema.title,
+            values: {...values, filename},
+            metadata,
+            env: templateSchemas[this.props.category].name
+        };
+    }
 
     submit() {
-        this.props.render({data: {}});
+        this.props.render({data: this.buildRenderObject(this.props.getValues())});
     }
 
     render() {
@@ -276,8 +289,10 @@ export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
     }
 }
 
-const Preview = connect<{}, {}, UnconnectedPreviewProps>(undefined, {
-    render
+const Preview = connect<{}, {}, UnconnectedPreviewProps>((state: Jason.State, ownProps: UnconnectedPreviewProps) => ({
+    getValues: () => ownProps.selector(state)
+}), {
+    render,
 })(UnconnectedPreview as any);
 
 
@@ -289,15 +304,15 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
         <Col md={6}>
         <Tabs defaultActiveKey={2} id="tab-view">
             <Tab eventKey={1} title="Schema">
-                <SchemaView schema={templateSchemas[category][schema]} />
+                <SchemaView schema={templateSchemas[category].schemas[schema]} />
             </Tab>
             <Tab eventKey={2} title="Form">
-                <FormView schema={templateSchemas[category][schema]} name={name} />
+                <FormView schema={templateSchemas[category].schemas[schema]} name={name} />
             </Tab>
         </Tabs>
         </Col>
         <Col md={6}>
-            <Preview category={category} schema={schema} name={name} />
+            <Preview category={category} schemaName={schema} form={name} selector={getFormValues(name)}/>
         </Col>
         </Grid>
     }
@@ -328,8 +343,8 @@ class TextAreaField extends React.PureComponent<WrappedFieldProps> {
 class SchemaField extends React.PureComponent<WrappedFieldProps & {category: string}> {
     render() {
         return <SelectField meta={this.props.meta} input={this.props.input}>
-            { Object.keys(templateSchemas[this.props.category]).map((key: string) => {
-                return <option key={key} value={key}>{ templateSchemas[this.props.category][key].title }</option>
+            { Object.keys(templateSchemas[this.props.category].schemas).map((key: string) => {
+                return <option key={key} value={key}>{ templateSchemas[this.props.category].schemas[key].title }</option>
             }) }
         </SelectField>
     }
@@ -341,6 +356,7 @@ const SchemaFieldWithCategory = formValues<any>('category')(SchemaField);
 export class FormLoader extends React.PureComponent<InjectedFormProps> {
     render() {
         return <div>
+        <h1 className="text-center">Template Playground</h1>
         <Grid>
         <Form  horizontal>
             <FormGroup controlId="formControlsSelect">

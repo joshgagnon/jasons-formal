@@ -20,7 +20,10 @@ function loadAll(context: any) : {[key: string] : any}{
 
 
 const templateSchemas : Jason.TemplateSchemas = {
-    'Good Companies': loadAll(gc)
+    'Good Companies': {
+        schemas: loadAll(gc),
+        name: 'gc'
+    }
 }
 
 export default templateSchemas;

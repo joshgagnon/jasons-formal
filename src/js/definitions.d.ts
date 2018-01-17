@@ -15,6 +15,7 @@ declare namespace Jason {
 
     interface Schema {
         title?: string;
+        formName?: string;
         description?: string;
         definitions: any,
         properties: SchemaProperties & any,
@@ -23,7 +24,8 @@ declare namespace Jason {
 
     interface TemplateSchemas {
         [category: string] : {
-            [schema: string] : Schema
+            name : string,
+            schemas: {[schema: string] : Schema}
         }
     }
 
