@@ -5,7 +5,7 @@ import templateSchemas from '../schemas';
 import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon } from 'react-bootstrap';
 import { componentType, getKey, addItem, setDefaults } from 'json-schemer';
 import FlipMove from 'react-flip-move';
-
+import { render } from '../actions';
 
 type SelectorType = (state: any, ...field: string[]) => any;
 
@@ -246,10 +246,45 @@ class FormView extends React.PureComponent<{schema: Jason.Schema, name: string}>
 }
 
 
+interface UnconnectedPreviewProps {
+   category: string,
+   schema: string,
+   name: string
+}
+
+interface PreviewProps extends UnconnectedPreviewProps {
+     render: (data: Jason.Actions.RenderPayload) => void
+}
+
+export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
+    constructor(props: PreviewProps) {
+        super(props);
+        this.submit = this.submit.bind(this);
+    }
+
+
+    submit() {
+        this.props.render({data: {}});
+    }
+
+    render() {
+        return <div>
+            <div className="button-row text-center">
+            <Button bsStyle="info" onClick={this.submit}>Render</Button>
+            </div>
+        </div>
+    }
+}
+
+const Preview = connect<{}, {}, UnconnectedPreviewProps>(undefined, {
+    render
+})(UnconnectedPreview as any);
+
 
 export class TemplateViews extends React.PureComponent<{category: string, schema: string}> {
     render() {
         const { category, schema } = this.props;
+        const name = `${category}.${schema}`;
         return  <Grid fluid>
         <Col md={6}>
         <Tabs defaultActiveKey={2} id="tab-view">
@@ -257,9 +292,12 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
                 <SchemaView schema={templateSchemas[category][schema]} />
             </Tab>
             <Tab eventKey={2} title="Form">
-                <FormView schema={templateSchemas[category][schema]} name={`${category}-${schema}`} />
+                <FormView schema={templateSchemas[category][schema]} name={name} />
             </Tab>
         </Tabs>
+        </Col>
+        <Col md={6}>
+            <Preview category={category} schema={schema} name={name} />
         </Col>
         </Grid>
     }

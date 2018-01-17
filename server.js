@@ -3,7 +3,7 @@ const app = express();
 
 app.use(express.static('public'));
 
-app.post('/render', function (req, res) {
+app.post('/api/render', function (req, res) {
   res.send('hello world')
 })
 
