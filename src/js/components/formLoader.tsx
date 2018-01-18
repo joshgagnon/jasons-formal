@@ -3,11 +3,11 @@ import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, For
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
 import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon } from 'react-bootstrap';
-import { componentType, getKey, addItem, setDefaults } from 'json-schemer';
+import { componentType, getKey, addItem, setDefaults, getValidate } from 'json-schemer';
 import FlipMove from 'react-flip-move';
 import { render } from '../actions';
 import PDF from 'react-pdf-component/lib/react-pdf';
-
+import Loading from './loading';
 
 type SelectorType = (state: any, ...field: string[]) => any;
 
@@ -197,16 +197,17 @@ class FieldsArray extends React.PureComponent<any> {
 
 
 
-function FieldRow(props: {title: string, name: string, component: any, children? : any}) : JSX.Element{
+function FieldRow(props: {title: string, name: string, component: any, children? : any}) : JSX.Element {
     const {title, name, component, children } = props;
     return <FormGroup>
         <Col sm={3} className="text-right">
-            <ControlLabel>{title}</ControlLabel>
+            <ControlLabel>{ title }</ControlLabel>
         </Col>
         <Col sm={7}>
-            <Field name={name} component={component as any}>
+            <Field name={ name } component={component as any}>
                 { children }
             </Field>
+            <FormControl.Feedback />
         </Col>
     </FormGroup>
 }
@@ -220,6 +221,7 @@ class RenderForm extends React.PureComponent<InjectedFormProps & {schema: Jason.
     render() {
         const { schema } = this.props;
         return <Form horizontal>
+            <p/>
                 <FormSet schema={schema} selector={formValueSelector(this.props.form)} />
                 { this.props.error && <div className="alert alert-danger">
                 { this.props.error }
@@ -239,12 +241,17 @@ class SchemaView extends React.PureComponent<{schema: Jason.Schema}> {
     }
 }
 
-const initialState = {"resolutionOptions":{"resolutionType":"Resolution at Board Meeting","dateOfMinute":"1","dateOfBoardMeeting":"1","chairperson":{"name":"1"}},"resolutions":[{"_keyIndex":1,"individualResolutionType":"Agent for Company Changes","resolutionOptions":{"nameOfAuthorisedAgent":"1"}}],"company":{"companyNumber":"1","companyName":"1"},"filename":"Board Resolution"};
 
-class FormView extends React.PureComponent<{schema: Jason.Schema, name: string}> {
+class FormView extends React.PureComponent<{schema: Jason.Schema, name: string, validate: Jason.Validate}> {
     render() {
         return <div>
-            <InjectedRenderForm schema={this.props.schema} form={this.props.name} key={this.props.name} initialValues={initialState}/>
+            <InjectedRenderForm
+                schema={this.props.schema}
+                form={this.props.name}
+                key={this.props.name}
+                validate={this.props.validate}
+                initialValues={setDefaults(this.props.schema, {}, {})}
+                />
         </div>
     }
 }
@@ -261,8 +268,10 @@ interface PDFPreviewProps extends UnconnectedPDFPreviewProps {
 
 export class UnconnectedPDFPreview extends React.PureComponent<PDFPreviewProps> {
     render() {
+        if(this.props.downloadStatus === Jason.DownloadStatus.InProgress)
+            return <Loading />
         if(this.props.downloadStatus === Jason.DownloadStatus.Complete)
-            return <PDF data={this.props.data} scale={2.5} />
+            return <PDF data={this.props.data} scale={2.5} noPDFMsg=' '/>
         return false;
     }
 }
@@ -291,7 +300,8 @@ export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
     }
 
     buildRenderObject(values : any, metadata = {}) {
-        const schema = templateSchemas[this.props.category].schemas[this.props.schemaName];
+        const type = templateSchemas[this.props.category].schemas[this.props.schemaName];
+        const schema = type.schema;
         const filename = schema.title;
         return {
             formName: schema.formName,
@@ -327,14 +337,15 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
     render() {
         const { category, schema } = this.props;
         const name = `${category}.${schema}`;
+        const type = templateSchemas[category].schemas[schema]
         return  <Grid fluid>
         <Col md={6}>
         <Tabs defaultActiveKey={2} id="tab-view">
             <Tab eventKey={1} title="Schema">
-                <SchemaView schema={templateSchemas[category].schemas[schema]} />
+                <SchemaView schema={type.schema} />
             </Tab>
             <Tab eventKey={2} title="Form">
-                <FormView schema={templateSchemas[category].schemas[schema]} name={name} />
+                <FormView schema={type.schema} validate={type.validate} name={name} />
             </Tab>
         </Tabs>
         </Col>
@@ -371,7 +382,7 @@ class SchemaField extends React.PureComponent<WrappedFieldProps & {category: str
     render() {
         return <SelectField meta={this.props.meta} input={this.props.input}>
             { Object.keys(templateSchemas[this.props.category].schemas).map((key: string) => {
-                return <option key={key} value={key}>{ templateSchemas[this.props.category].schemas[key].title }</option>
+                return <option key={key} value={key}>{ templateSchemas[this.props.category].schemas[key].schema.title }</option>
             }) }
         </SelectField>
     }

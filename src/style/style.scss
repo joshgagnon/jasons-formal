@@ -26,6 +26,8 @@ $icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
 @import "~bootstrap-sass/assets/stylesheets/bootstrap/utilities";
 @import "~bootstrap-sass/assets/stylesheets/bootstrap/responsive-utilities";
 
+@import "loading";
+
 html {
     position: relative;
     min-height: 100%;
@@ -36,3 +38,4 @@ html {
         width:100%;
     }
 }
+

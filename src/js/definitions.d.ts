@@ -22,10 +22,16 @@ declare namespace Jason {
         oneOf?: any[]
     }
 
+    type Validate = (values: any) => any;
+
     interface TemplateSchemas {
         [category: string] : {
             name : string,
-            schemas: {[schema: string] : Schema}
+            schemas: {[schema: string] : {
+                schema: Schema,
+                validate: Validate
+                }
+            }
         }
     }
 
@@ -84,6 +90,7 @@ declare module 'json-schemer' {
     export function getKey(): string;
     export function addItem(field: any): string;
     export function setDefaults(schema: Jason.Schema, context: any, values: any): any;
+    export function getValidate(schema: Jason.Schema) : (values: any) => any
 }
 
 declare module 'deepmerge' {
