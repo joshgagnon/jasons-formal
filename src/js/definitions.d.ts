@@ -29,8 +29,14 @@ declare namespace Jason {
         }
     }
 
-    interface State {
+    interface DocumentState {
+        downloadStatus?: DownloadStatus;
+        data?: any;
 
+    }
+
+    interface State {
+        document: DocumentState,
     }
 }
 
@@ -82,4 +88,19 @@ declare module 'json-schemer' {
 
 declare module 'deepmerge' {
     export default function deepmerge(arg1: any, arg2: any): any;
+}
+
+
+declare namespace ReactPDF {
+    interface Props {
+      data: any;
+      scale: number;
+      noPDFMsg?: string;
+    }
+}
+
+declare module 'react-pdf-component/lib/react-pdf' {
+    export default class ReactLazyLoad extends React.PureComponent<ReactPDF.Props> {
+
+    }
 }

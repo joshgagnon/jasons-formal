@@ -6,6 +6,8 @@ import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Butto
 import { componentType, getKey, addItem, setDefaults } from 'json-schemer';
 import FlipMove from 'react-flip-move';
 import { render } from '../actions';
+import PDF from 'react-pdf-component/lib/react-pdf';
+
 
 type SelectorType = (state: any, ...field: string[]) => any;
 
@@ -237,14 +239,38 @@ class SchemaView extends React.PureComponent<{schema: Jason.Schema}> {
     }
 }
 
+const initialState = {"resolutionOptions":{"resolutionType":"Resolution at Board Meeting","dateOfMinute":"1","dateOfBoardMeeting":"1","chairperson":{"name":"1"}},"resolutions":[{"_keyIndex":1,"individualResolutionType":"Agent for Company Changes","resolutionOptions":{"nameOfAuthorisedAgent":"1"}}],"company":{"companyNumber":"1","companyName":"1"},"filename":"Board Resolution"};
+
 class FormView extends React.PureComponent<{schema: Jason.Schema, name: string}> {
     render() {
         return <div>
-            <InjectedRenderForm schema={this.props.schema} form={this.props.name} key={this.props.name} />
+            <InjectedRenderForm schema={this.props.schema} form={this.props.name} key={this.props.name} initialValues={initialState}/>
         </div>
     }
 }
 
+
+interface UnconnectedPDFPreviewProps {
+
+}
+
+interface PDFPreviewProps extends UnconnectedPDFPreviewProps {
+    data?: any;
+    downloadStatus: Jason.DownloadStatus
+}
+
+export class UnconnectedPDFPreview extends React.PureComponent<PDFPreviewProps> {
+    render() {
+        if(this.props.downloadStatus === Jason.DownloadStatus.Complete)
+            return <PDF data={this.props.data} scale={2.5} />
+        return false;
+    }
+}
+
+const PDFPreview = connect((state : Jason.State, ownProps) => ({
+    data: state.document.data,
+    downloadStatus: state.document.downloadStatus
+}))(UnconnectedPDFPreview as any);
 
 interface UnconnectedPreviewProps {
    category: string,
@@ -281,10 +307,11 @@ export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
     }
 
     render() {
-        return <div>
+        return <div className="preview">
             <div className="button-row text-center">
             <Button bsStyle="info" onClick={this.submit}>Render</Button>
             </div>
+            <PDFPreview />
         </div>
     }
 }

@@ -20,7 +20,7 @@ function *renderSaga() {
         }));
         let data;
         try {
-            const response = yield call(axios.post, `/api/render`, action.payload.data);
+            const response = yield call(axios.post, `/api/render`, action.payload.data, {responseType: 'arraybuffer' });
             data = response.data;
             yield put(updateRender({
                 downloadStatus: Jason.DownloadStatus.Complete,
