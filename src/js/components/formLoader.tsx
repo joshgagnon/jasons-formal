@@ -83,20 +83,20 @@ class RenderField extends React.PureComponent<{field: any, name: string, selecto
                 const subType = componentType(field);
                 switch(subType){
                     case 'textarea':
-                        return <FieldRow title={title} name={name} component={TextAreaField} />
+                        return <Field title={title} name={name} component={TextAreaFieldRow} />
                     default:
-                        return <FieldRow title={title} name={name} component={TextField} />
+                        return <Field title={title} name={name} component={TextFieldRow} />
                 }
             }
             case undefined: {
                 // the > 1 check is a easy way to not render the oneOf match structures (causes a duplication of the field)
                 if(field.enum && field.enum.length > 1){
-                    return <FieldRow title={title} name={name} component={SelectField}>
+                    return <Field title={title} name={name} component={SelectFieldRow}>
                          <option value="" disabled>Please Select...</option>
                         { field.enum.map((f: string, i: number) => {
                             return <option key={i} value={f}>{field.enumNames ? field.enumNames[i] : f}</option>
                         })}
-                    </FieldRow>
+                    </Field>
                 }
             }
         }
@@ -197,20 +197,49 @@ class FieldsArray extends React.PureComponent<any> {
 
 
 
-function FieldRow(props: {title: string, name: string, component: any, children? : any}) : JSX.Element {
-    const {title, name, component, children } = props;
+function FieldRowxx(props: {title: string, name: string, component: any, children? : any}) : JSX.Element {
+    const { title, name, component, children } = props;
     return <FormGroup>
         <Col sm={3} className="text-right">
             <ControlLabel>{ title }</ControlLabel>
         </Col>
         <Col sm={7}>
-            <Field name={ name } component={component as any}>
+            <Field name={ name } component={component as any} props={{title: title}}>
                 { children }
             </Field>
             <FormControl.Feedback />
         </Col>
     </FormGroup>
 }
+
+
+function FieldRow(Component: any) : any {
+
+    return class Wrapped extends React.PureComponent<any> {
+        getValidationState() {
+            if(this.props.meta.touched){
+                return this.props.meta.valid ? 'success' : 'error';
+            }
+            return null;
+        }
+
+        render(){
+            const props = this.props;
+            return <FormGroup validationState={this.getValidationState()}>
+                <Col sm={3} className="text-right">
+                    <ControlLabel>{ props.title }</ControlLabel>
+                </Col>
+                <Col sm={7}>
+                     <Component {...props} />
+                    <FormControl.Feedback />
+                </Col>
+            </FormGroup>
+        }
+
+    }
+}
+
+
 
 
 
@@ -377,6 +406,11 @@ class TextAreaField extends React.PureComponent<WrappedFieldProps> {
         return <FormControl {...this.props.input} componentClass="textarea" />
     }
 }
+
+const SelectFieldRow = FieldRow(SelectField);
+const TextFieldRow = FieldRow(TextField);
+const TextAreaFieldRow = FieldRow(TextAreaField);
+
 
 class SchemaField extends React.PureComponent<WrappedFieldProps & {category: string}> {
     render() {
