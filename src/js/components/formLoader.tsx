@@ -2,7 +2,7 @@ import * as React from "react";
 import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector, getFormValues } from 'redux-form';
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
-import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon } from 'react-bootstrap';
+import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon, ProgressBar } from 'react-bootstrap';
 import { componentType, getKey, addItem, setDefaults, getValidate } from 'json-schemer';
 import FlipMove from 'react-flip-move';
 import { render } from '../actions';
@@ -240,11 +240,6 @@ function FieldRow(Component: any) : any {
 }
 
 
-
-
-
-
-
 class RenderForm extends React.PureComponent<InjectedFormProps & {schema: Jason.Schema}> {
 
     render() {
@@ -285,6 +280,80 @@ class FormView extends React.PureComponent<{schema: Jason.Schema, name: string, 
     }
 }
 
+function getSubSchema(schema: Jason.Schema, stepIndex: number) : Jason.Schema {
+    const fields = schema.wizard.steps[stepIndex].items;
+    const properties = Object.keys(schema.properties).reduce((acc: any, key: string) => {
+
+        if(fields.indexOf(key) >= 0){
+            acc[key] = schema.properties[key];
+        }
+        return acc;
+    }, {})
+    return {...schema, properties}
+}
+
+
+interface WizardViewProps {
+    schema: Jason.Schema,
+    name: string,
+    validate: Jason.Validate
+}
+
+
+class WizardView extends React.PureComponent<WizardViewProps, {step: number}> {
+
+    constructor(props: WizardViewProps) {
+        super(props);
+        this.nextStep = this.nextStep.bind(this);
+        this.prevStep = this.prevStep.bind(this);
+        this.state = {step: 0}
+    }
+
+    lastStep() {
+        return this.state.step === this.props.schema.wizard.steps.length - 1;
+    }
+
+    firstStep() {
+        return this.state.step === 0;
+    }
+
+    nextStep() {
+        if(!this.lastStep()){
+            this.setState({step: this.state.step+1})
+        }
+    }
+
+    prevStep() {
+        if(!this.firstStep()){
+            this.setState({step: this.state.step-1})
+        }
+    }
+
+    render() {
+        return <div>
+            <br/>
+            <ProgressBar striped bsStyle="success"
+                now={(this.state.step+1)/(this.props.schema.wizard.steps.length) * 100}
+                label={`Step ${this.state.step+1} of ${this.props.schema.wizard.steps.length}`}
+
+                />
+
+            <InjectedRenderForm
+                schema={getSubSchema(this.props.schema, this.state.step)}
+                form={this.props.name}
+                key={this.props.name}
+                validate={this.props.validate}
+                destroyOnUnmount={false}
+                initialValues={setDefaults(this.props.schema, {}, {})}
+                />
+
+            <div className="button-row">
+                { !this.firstStep() && <Button onClick={this.prevStep}>Back</Button> }
+                { !this.lastStep() && <Button onClick={this.nextStep}>Next</Button> }
+            </div>
+        </div>
+    }
+}
 
 interface UnconnectedPDFPreviewProps {
 
@@ -323,6 +392,7 @@ interface PreviewProps extends UnconnectedPreviewProps {
 }
 
 export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
+
     constructor(props: PreviewProps) {
         super(props);
         this.submit = this.submit.bind(this);
@@ -347,7 +417,7 @@ export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
 
     render() {
         return <div className="preview">
-            <div className="button-row text-center">
+            <div className="button-row">
             <Button bsStyle="info" onClick={this.submit}>Render</Button>
             </div>
             <PDFPreview />
@@ -366,7 +436,7 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
     render() {
         const { category, schema } = this.props;
         const name = `${category}.${schema}`;
-        const type = templateSchemas[category].schemas[schema]
+        const type = templateSchemas[category].schemas[schema];
         return  <Grid fluid>
         <Col md={6}>
         <Tabs defaultActiveKey={2} id="tab-view">
@@ -376,6 +446,9 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
             <Tab eventKey={2} title="Form">
                 <FormView schema={type.schema} validate={type.validate} name={name} />
             </Tab>
+            {type.schema.wizard && <Tab eventKey={3} title="Wizard">
+                <WizardView schema={type.schema} validate={type.validate} name={name} />
+            </Tab> }
         </Tabs>
         </Col>
         <Col md={6}>

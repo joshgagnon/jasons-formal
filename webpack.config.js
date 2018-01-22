@@ -101,6 +101,9 @@ module.exports = function(env){
                 to: './'
             }
         ]),
+        new CopyWebpackPlugin([
+                { from: 'node_modules/pdfjs-dist/build/pdf.worker.min.js', to: './pdf.worker.js' }
+        ]),
         new ExtractTextPlugin(DEV ? '[name].css' : '[name].[hash].css'),
         new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en-nz/),
         function() {

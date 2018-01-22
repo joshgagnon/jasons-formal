@@ -19,7 +19,8 @@ declare namespace Jason {
         description?: string;
         definitions: any,
         properties: SchemaProperties & any,
-        oneOf?: any[]
+        oneOf?: any[];
+        wizard?: any;
     }
 
     type Validate = (values: any) => any;
