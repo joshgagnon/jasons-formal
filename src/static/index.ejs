@@ -1,13 +1,24 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Jasons Formal</title>
+        <title>CataLex Templates Test</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
         <link rel="icon" type="image/png" href="/favicon.png" >
     </head>
 
     <body>
+          <% if(!DEV){ %>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-59849645-7');
+</script>
+
+  <% } %>
 
         <div id="main"></div>
 

@@ -1,35 +1,49 @@
 import * as React from "react";
-import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector, getFormValues } from 'redux-form';
+import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector, getFormValues, initialize, touch, getFormSyncErrors, isDirty } from 'redux-form';
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
-import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon, ProgressBar } from 'react-bootstrap';
-import { componentType, getKey, addItem, setDefaults, getValidate } from 'json-schemer';
+import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon, ProgressBar, ToggleButtonGroup, DropdownButton, MenuItem, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { componentType, getKey, addItem, setDefaults, getValidate, controlStyle, formatString, getSubSchema, getFieldsFromErrors, suggestions } from 'json-schemer';
 import FlipMove from 'react-flip-move';
-import { render } from '../actions';
+import { render, showPreview, showComplete, showConfirmation, showRestore, setWizardPage } from '../actions';
 import PDF from 'react-pdf-component/lib/react-pdf';
 import Loading from './loading';
+import * as DateTimePicker from 'react-widgets/lib/DateTimePicker'
+import * as moment from 'moment';
 
-type SelectorType = (state: any, ...field: string[]) => any;
+export const required = (value : any) => (value ? undefined : 'Required')
+
+function isCheckbox(enums : (string | boolean)[]) {
+    return enums.length === 2 && ((enums[0] === false && enums[1] === true) || (enums[1] === false && enums[0] === true));
+}
+
+const INITIAL_VALUES = {};
+
 
 interface FormSetProps {
     schema: Jason.Schema,
-    subSchema?: Jason.Schema
+    subSchema?: Jason.Schema,
+    showTitle?: boolean,
     name?: string,
-    selector: SelectorType
+    index?: number,
+    selector: Jason.SelectorType
 }
 
 
 class UnconnectedFormSet extends React.PureComponent<FormSetProps> {
     render() {
-        const { schema, subSchema, selector } = this.props;
+        const { schema, subSchema, selector, index, name, showTitle } = this.props;
         const { properties, title } = schema;
         const schemaProps = properties;
+        if(!properties){
+            return false;
+        }
 
         return (
             <fieldset>
-             { title && <legend>{title}</legend>}
+             { title && showTitle !== false && <legend>{title}</legend>}
                 { Object.keys(schemaProps).map((key, i) => {
-                    return <RenderField key={i} field={schemaProps[key]} name={key} selector={selector}/>
+                    return <RenderField key={i} field={schemaProps[key]} name={key} selector={selector} index={index} parentName={name}/>
                 }) }
                 { subSchema && <FormSet schema={subSchema} name={this.props.name} selector={selector} /> }
             </fieldset>
@@ -66,31 +80,38 @@ const FormSet = connect<{}, {}, FormSetProps>((state: Jason.State, ownProps: For
 })(UnconnectedFormSet as any);
 
 
-class RenderField extends React.PureComponent<{field: any, name: string, selector: (name: any) => any}> {
+class RenderField extends React.PureComponent<{field: any, name: string, index?: number, parentName?: string, selector: (name: any) => any}> {
     render() : false | JSX.Element {
-        const { name, field, selector } = this.props;
-        const title = field.title;
+        const { name, field, selector, index } = this.props;
+        const title = field.enumeratedTitle ? formatString(field.enumeratedTitle, index+1) : field.title;
         switch(field.type){
             case 'object': {
+                const deepName = this.props.parentName ? `${this.props.parentName}.${name}` : name;
                 return <FormSection name={name}>
-                        <FormSet schema={(this.props.field as Jason.Schema)} name={name} selector={selector}/>
+                        <FormSet schema={(this.props.field as Jason.Schema)} name={deepName} selector={selector} index={index}/>
                     </FormSection>
             }
             case 'array': {
-                return <FieldArray name={name} component={FieldsArray} props={{field: field.items, title: field.title, selector}} />
+                return <FieldArray name={name} component={FieldsArray} props={{field: field.items, title: field.title, selector, index}} />
             }
             case 'string': {
                 const subType = componentType(field);
                 switch(subType){
                     case 'textarea':
                         return <Field title={title} name={name} component={TextAreaFieldRow} />
+                    case 'date':
+                        return <Field title={title} name={name} component={DateFieldRow} formatDate={field.formatDate}/>
                     default:
                         return <Field title={title} name={name} component={TextFieldRow} />
                 }
             }
             case undefined: {
                 // the > 1 check is a easy way to not render the oneOf match structures (causes a duplication of the field)
+
                 if(field.enum && field.enum.length > 1){
+                    if(isCheckbox(field.enum)){
+                        return <Field title={title} name={name} component={CheckboxFieldRow} />
+                    }
                     return <Field title={title} name={name} component={SelectFieldRow}>
                          <option value="" disabled>Please Select...</option>
                         { field.enum.map((f: string, i: number) => {
@@ -159,8 +180,8 @@ class RemoveButton extends React.PureComponent<any>{
 
 class ListItemControls extends React.PureComponent<any> {
     render() {
-        const { index, numItems, fields: { swap, remove }} = this.props;
-        return <div className="btn-group-vertical btn-group-xs" style={{position: 'absolute', right: 0, top: 0}}>
+        const { index, numItems,inline, fields: { swap, remove }} = this.props;
+        return <div className={`${inline ? 'btn-group' : 'btn-group-vertical'} btn-group-xs`} style={{position: 'absolute', right: 0, top: 0}}>
             <MoveUpButton key={0} index={index} swapFields={swap} numItems={numItems} forceDisplay={true} />
             <MoveDownButton key={1} index={index} swapFields={swap} numItems={numItems} forceDisplay={true} />
             <RemoveButton key={2} index={index} removeField={remove} numItems={numItems} forceDisplay={true} />
@@ -170,47 +191,51 @@ class ListItemControls extends React.PureComponent<any> {
 }
 
 
+
 class FieldsArray extends React.PureComponent<any> {
+    add() {
+         const { fields, field } = this.props;
+        const suggestionList = suggestions(field);
+        if(suggestionList){
+            return <DropdownButton title={ addItem(field) } id={fields.name}>
+                { suggestionList.map((sug: any, index: number) => {
+                    return <OverlayTrigger key={index} overlay={<Tooltip id={sug.title}>{sug.title}</Tooltip>}>
+                        <MenuItem eventKey={index}  onSelect={() => fields.push({_keyIndex: getKey(), ...sug.value})}>
+                          { sug.title }
+                    </MenuItem>
+                        </OverlayTrigger>
+                }) }
+                 <MenuItem divider />
+                 <MenuItem eventKey={suggestionList.length} onSelect={() => fields.push({_keyIndex: getKey()})}>Custom</MenuItem>
+            </DropdownButton>
+        }
+        return <Button onClick={() => fields.push({_keyIndex: getKey()})}>
+                 { addItem(field) }
+              </Button>
+    }
     render() {
         const { fields, field, title, selector } = this.props;
+        const inline = controlStyle(field) === 'inline';
         return <fieldset className="list">
             { title && <legend>{ title }</legend>}
             <FlipMove duration={250} easing="ease-out">
             { fields.map((name: any, index: number) => {
                 return <div key={fields.get(index)._keyIndex}>
-                    <div style={{position: 'relative', minHeight: 70}}>
-                    <RenderField  name={name} field={field} selector={selector} />
-                    <ListItemControls fields={fields} index={index} numItems={fields.length} name={name}/>
+                    <div style={{position: 'relative', minHeight: inline ? 0 : 70}}>
+                    <RenderField  name={name} field={field} selector={selector} index={index} />
+                    <ListItemControls fields={fields} index={index} numItems={fields.length} name={name} inline={inline}/>
                     </div>
-                    </div>
+                </div>
             }) }
             </FlipMove>
             <div className="text-center">
-            <Button onClick={() => fields.push({_keyIndex: getKey()})}>
-            { addItem(field) }
-          </Button>
+                { this.add() }
           </div>
             </fieldset>
         }
 }
 
 
-
-
-function FieldRowxx(props: {title: string, name: string, component: any, children? : any}) : JSX.Element {
-    const { title, name, component, children } = props;
-    return <FormGroup>
-        <Col sm={3} className="text-right">
-            <ControlLabel>{ title }</ControlLabel>
-        </Col>
-        <Col sm={7}>
-            <Field name={ name } component={component as any} props={{title: title}}>
-                { children }
-            </Field>
-            <FormControl.Feedback />
-        </Col>
-    </FormGroup>
-}
 
 
 function FieldRow(Component: any) : any {
@@ -229,7 +254,7 @@ function FieldRow(Component: any) : any {
                 <Col sm={3} className="text-right">
                     <ControlLabel>{ props.title }</ControlLabel>
                 </Col>
-                <Col sm={7}>
+                <Col sm={this.props.columnWidth || 7}>
                      <Component {...props} />
                     <FormControl.Feedback />
                 </Col>
@@ -246,7 +271,7 @@ class RenderForm extends React.PureComponent<InjectedFormProps & {schema: Jason.
         const { schema } = this.props;
         return <Form horizontal>
             <p/>
-                <FormSet schema={schema} selector={formValueSelector(this.props.form)} />
+                <FormSet schema={schema} selector={formValueSelector(this.props.form)} showTitle={false}/>
                 { this.props.error && <div className="alert alert-danger">
                 { this.props.error }
                 </div> }
@@ -274,197 +299,254 @@ class FormView extends React.PureComponent<{schema: Jason.Schema, name: string, 
                 form={this.props.name}
                 key={this.props.name}
                 validate={this.props.validate}
-                initialValues={setDefaults(this.props.schema, {}, {})}
+                initialValues={setDefaults(this.props.schema, {}, INITIAL_VALUES)}
                 />
         </div>
     }
 }
 
-function getSubSchema(schema: Jason.Schema, stepIndex: number) : Jason.Schema {
-    const fields = schema.wizard.steps[stepIndex].items;
-    const properties = Object.keys(schema.properties).reduce((acc: any, key: string) => {
 
-        if(fields.indexOf(key) >= 0){
-            acc[key] = schema.properties[key];
+class Errors extends React.PureComponent<{errors: any, name: string, values: any, dirty: boolean,
+    touch: (form: string, ...fields: string[]) => void,
+    showRestore: () => void}>{
+    constructor(props: any) {
+        super(props);
+        this.navWillLeave = this.navWillLeave.bind(this);
+    }
+
+    navWillLeave() {
+        if(localStorage){
+            localStorage.setItem('saved', JSON.stringify({
+                values: this.props.values,
+                name: this.props.name
+            }));
+
         }
-        return acc;
-    }, {})
-    return {...schema, properties}
+    }
+
+    componentDidMount() {
+        window.addEventListener('beforeunload', this.navWillLeave);
+        if(localStorage.getItem('saved')){
+            try{
+                const state = JSON.parse(localStorage.getItem('saved'));
+                // if parses, a good start
+                this.props.showRestore();
+            }
+            catch(e){
+                localStorage.removeItem('saved');
+            }
+        }
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('beforeunload', this.navWillLeave);
+    }
+
+
+    touchAll() {
+        const fields = getFieldsFromErrors(this.props.errors);
+        this.props.touch(this.props.name, ...fields);
+    }
+    render() {
+        return false;
+    }
 }
 
+
+const ConnectedErrors = connect((state: Jason.State, ownProps: any) => {
+    const values = getFormValues(ownProps.name)(state)
+    return {errors: getFormSyncErrors(ownProps.name)(state), values, dirty: isDirty(ownProps.name)(state)}
+}, { touch, showRestore }, undefined, {withRef: true})(Errors as any);
 
 interface WizardViewProps {
     schema: Jason.Schema,
     name: string,
-    validate: Jason.Validate
+    validate: Jason.Validate,
+    validatePages: Jason.Validate[],
+    showPreview: () => void;
+    showComplete: () => void;
+    reset: (name: string, values: any) => void;
+    setWizardPage: (page: number) => void;
+    page: number
 }
 
 
-class WizardView extends React.PureComponent<WizardViewProps, {step: number}> {
+class WizardView extends React.PureComponent<WizardViewProps> {
 
     constructor(props: WizardViewProps) {
         super(props);
         this.nextStep = this.nextStep.bind(this);
         this.prevStep = this.prevStep.bind(this);
-        this.state = {step: 0}
+        this.finish = this.finish.bind(this);
+        this.reset = this.reset.bind(this);
     }
 
     lastStep() {
-        return this.state.step === this.props.schema.wizard.steps.length - 1;
+        return this.props.page === this.props.schema.wizard.steps.length - 1;
     }
 
     firstStep() {
-        return this.state.step === 0;
+        return this.props.page === 0;
+    }
+
+    validate() {
+        if(!(this.refs.form as any).valid){
+            ((this.refs.errors as any).getWrappedInstance() as Errors).touchAll();
+            return false;
+        }
+        return true;
     }
 
     nextStep() {
-        if(!this.lastStep()){
-            this.setState({step: this.state.step+1})
+        if(this.validate() && !this.lastStep()){
+            this.props.setWizardPage(this.props.page+1);
+        }
+    }
+
+    finish() {
+        if(this.validate()){
+            this.props.showComplete();
         }
     }
 
     prevStep() {
         if(!this.firstStep()){
-            this.setState({step: this.state.step-1})
+            this.props.setWizardPage(this.props.page-1)
         }
+    }
+
+    reset() {
+        this.props.reset(this.props.name, setDefaults(this.props.schema, {}, INITIAL_VALUES));
     }
 
     render() {
         return <div>
             <br/>
             <ProgressBar striped bsStyle="success"
-                now={(this.state.step+1)/(this.props.schema.wizard.steps.length) * 100}
-                label={`Step ${this.state.step+1} of ${this.props.schema.wizard.steps.length}`}
+                now={(this.props.page+1)/(this.props.schema.wizard.steps.length) * 100}
+                label={`Step ${this.props.page+1} of ${this.props.schema.wizard.steps.length}`}
 
                 />
 
             <InjectedRenderForm
-                schema={getSubSchema(this.props.schema, this.state.step)}
+                ref="form"
+                schema={getSubSchema(this.props.schema, this.props.page)}
                 form={this.props.name}
-                key={this.props.name}
-                validate={this.props.validate}
+                key={`${this.props.name}-${this.props.page}`}
+                validate={this.props.validatePages[this.props.page]}
                 destroyOnUnmount={false}
-                initialValues={setDefaults(this.props.schema, {}, {})}
+                forceUnregisterOnUnmount={true}
+                initialValues={setDefaults(this.props.schema, {}, INITIAL_VALUES)}
                 />
-
+            <ConnectedErrors ref="errors" name={this.props.name} key={this.props.page} />
             <div className="button-row">
+                { <Button onClick={this.reset}>Reset</Button> }
                 { !this.firstStep() && <Button onClick={this.prevStep}>Back</Button> }
-                { !this.lastStep() && <Button onClick={this.nextStep}>Next</Button> }
+                { !this.lastStep() && <Button bsStyle={'success'} onClick={this.nextStep}>Next</Button> }
+                { (this.lastStep() || true) && <Button bsStyle={'success'} onClick={this.finish}>Finish</Button> }
+                { <Button bsStyle={'info'} onClick={this.props.showPreview}>Preview</Button> }
             </div>
         </div>
     }
 }
 
-interface UnconnectedPDFPreviewProps {
-
-}
-
-interface PDFPreviewProps extends UnconnectedPDFPreviewProps {
-    data?: any;
-    downloadStatus: Jason.DownloadStatus
-}
-
-export class UnconnectedPDFPreview extends React.PureComponent<PDFPreviewProps> {
-    render() {
-        if(this.props.downloadStatus === Jason.DownloadStatus.InProgress)
-            return <Loading />
-        if(this.props.downloadStatus === Jason.DownloadStatus.Complete)
-            return <PDF data={this.props.data} scale={2.5} noPDFMsg=' '/>
-        return false;
-    }
-}
-
-const PDFPreview = connect((state : Jason.State, ownProps) => ({
-    data: state.document.data,
-    downloadStatus: state.document.downloadStatus
-}))(UnconnectedPDFPreview as any);
-
-interface UnconnectedPreviewProps {
-   category: string,
-   schemaName: string,
-   form: string,
-   selector: SelectorType
-}
-
-interface PreviewProps extends UnconnectedPreviewProps {
-     render: (data: Jason.Actions.RenderPayload) => void,
-     getValues: () => any,
-}
-
-export class UnconnectedPreview extends React.PureComponent<PreviewProps> {
-
-    constructor(props: PreviewProps) {
-        super(props);
-        this.submit = this.submit.bind(this);
-    }
-
-    buildRenderObject(values : any, metadata = {}) {
-        const type = templateSchemas[this.props.category].schemas[this.props.schemaName];
-        const schema = type.schema;
-        const filename = schema.title;
-        return {
-            formName: schema.formName,
-            templateTitle: schema.title,
-            values: {...values, filename},
-            metadata,
-            env: templateSchemas[this.props.category].name
-        };
-    }
-
-    submit() {
-        this.props.render({data: this.buildRenderObject(this.props.getValues())});
-    }
-
-    render() {
-        return <div className="preview">
-            <div className="button-row">
-            <Button bsStyle="info" onClick={this.submit}>Render</Button>
-            </div>
-            <PDFPreview />
-        </div>
-    }
-}
-
-const Preview = connect<{}, {}, UnconnectedPreviewProps>((state: Jason.State, ownProps: UnconnectedPreviewProps) => ({
-    getValues: () => ownProps.selector(state)
-}), {
-    render,
-})(UnconnectedPreview as any);
+const ConnectedWizardView = connect((state: Jason.State, ownProps: any) => ({
+    page: (state.wizard[ownProps.name] || {page: 0}).page
+}), (dispatch, ownProps) => ({
+    setWizardPage: (page: number) => dispatch(setWizardPage({name: ownProps.name, page}))
+}))(WizardView as any);
 
 
-export class TemplateViews extends React.PureComponent<{category: string, schema: string}> {
+
+export class TemplateViews extends React.PureComponent<{category: string, schema: string,
+    showPreview : () => void,
+    showComplete: () => void,
+    reset: (name: string, values: any) => void
+}> {
     render() {
         const { category, schema } = this.props;
         const name = `${category}.${schema}`;
         const type = templateSchemas[category].schemas[schema];
+        if(!type) {
+            return false;
+        }
         return  <Grid fluid>
-        <Col md={6}>
-        <Tabs defaultActiveKey={2} id="tab-view">
-            <Tab eventKey={1} title="Schema">
+        <Col md={6} mdOffset={3}>
+        <Tabs defaultActiveKey={3} id="tab-view" unmountOnExit={true}>
+            {/* <Tab eventKey={1} title="Schema">
                 <SchemaView schema={type.schema} />
-            </Tab>
-            <Tab eventKey={2} title="Form">
+            </Tab> */ }
+             <Tab eventKey={2} title="Form">
                 <FormView schema={type.schema} validate={type.validate} name={name} />
             </Tab>
             {type.schema.wizard && <Tab eventKey={3} title="Wizard">
-                <WizardView schema={type.schema} validate={type.validate} name={name} />
+                <ConnectedWizardView
+                schema={type.schema}
+                validate={type.validate}
+                validatePages={type.validatePages}
+                name={name}
+                showPreview={this.props.showPreview}
+                showComplete={this.props.showComplete}
+                reset={this.props.reset}/>
             </Tab> }
         </Tabs>
         </Col>
-        <Col md={6}>
-            <Preview category={category} schemaName={schema} form={name} selector={getFormValues(name)}/>
-        </Col>
+
         </Grid>
     }
 }
 
-const InjectedTemplateViews = formValues<any>('category', 'schema')(TemplateViews);
+const InjectedTemplateViews = connect(undefined, {
+    showPreview: () => showPreview({}),
+    showComplete: () => showComplete({}),
+    reset: (formName: string, values: any) => showConfirmation({title: 'Reset Form',
+                                  message: 'Are you sure you wish to reset the form?',
+                                  rejectLabel: 'Cancel', acceptLabel: 'Reset',
+                                  acceptActions: [initialize(formName, values), setWizardPage({name: formName, page: 0})]})
+  })(formValues<any>('category', 'schema')(TemplateViews) as any);
+
+
+class RenderDateTimePicker extends React.PureComponent<WrappedFieldProps & {formatDate: string}> {
+    render() {
+
+        const  { input: { onChange, value, onBlur }, formatDate} = this.props;
+        const readFormats = [formatDate, "D M YYYY", "D MMM YYYY", "D/M/YYYY", "D-M-YYYY", "D MMMM YYYY"];
+        return   <DateTimePicker
+            onBlur={() => onBlur(undefined)}
+            onChange={(date, string) => formatDate ? onChange(string) :  onChange(date)}
+            parse={(string) => {
+                const mo = moment(string, readFormats)
+                return mo.isValid() ? mo.toDate() : null;
+                }
+            }
+            format={this.props.formatDate}
+            time={false}
+            value={!value ? null : new Date(value)}
+          />
+    }
+}
+
+
+
+class ToggleButtonField extends React.PureComponent<WrappedFieldProps> {
+    render() {
+        return <ToggleButtonGroup {...this.props.input}  type="radio">
+            { this.props.children }
+        </ToggleButtonGroup>
+    }
+}
 
 class SelectField extends React.PureComponent<WrappedFieldProps> {
     render() {
         return <FormControl {...this.props.input} componentClass="select">
             { this.props.children }
         </FormControl>
+    }
+}
+
+class CheckboxField extends React.PureComponent<WrappedFieldProps> {
+    render() {
+        return <FormControl {...this.props.input} componentClass={'input'} type="checkbox" className="checkbox" />
     }
 }
 
@@ -480,9 +562,18 @@ class TextAreaField extends React.PureComponent<WrappedFieldProps> {
     }
 }
 
-const SelectFieldRow = FieldRow(SelectField);
-const TextFieldRow = FieldRow(TextField);
-const TextAreaFieldRow = FieldRow(TextAreaField);
+class DateField extends React.PureComponent<WrappedFieldProps> {
+    render() {
+        return <FormControl {...this.props} {...this.props.input}  componentClass={RenderDateTimePicker}  />
+    }
+}
+
+export const ToggleButtonFieldRow = FieldRow(ToggleButtonField);
+export const SelectFieldRow = FieldRow(SelectField);
+export const TextFieldRow = FieldRow(TextField);
+export const TextAreaFieldRow = FieldRow(TextAreaField);
+export const DateFieldRow = FieldRow(DateField);
+export const CheckboxFieldRow = FieldRow(CheckboxField);
 
 
 class SchemaField extends React.PureComponent<WrappedFieldProps & {category: string}> {
@@ -501,11 +592,12 @@ const SchemaFieldWithCategory = formValues<any>('category')(SchemaField);
 export class FormLoader extends React.PureComponent<InjectedFormProps> {
     render() {
         return <div>
-        <h1 className="text-center">Template Playground</h1>
+
         <Grid>
+                <Col md={6} mdOffset={3}>
         <Form  horizontal>
             <FormGroup controlId="formControlsSelect">
-                <Col sm={2}>
+                    <Col sm={2}>
                     <ControlLabel>Category</ControlLabel>
                 </Col>
                 <Col sm={10}>
@@ -525,6 +617,7 @@ export class FormLoader extends React.PureComponent<InjectedFormProps> {
                 </Col>
             </FormGroup>
         </Form>
+        </Col>
     </Grid>
         <InjectedTemplateViews />
     </div>
@@ -533,6 +626,6 @@ export class FormLoader extends React.PureComponent<InjectedFormProps> {
 
 
 export default reduxForm<{}>({
-    form: 'formLoader',
+    form: 'formLoader'
 })(FormLoader);
 
