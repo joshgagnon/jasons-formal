@@ -290,8 +290,26 @@ class SchemaView extends React.PureComponent<{schema: Jason.Schema}> {
     }
 }
 
+interface FormViewProps {
+    schema: Jason.Schema;
+    name: string;
+    validate: Jason.Validate;
+    showPreview: () => void;
+    showComplete: () => void;
+    reset: (name: string, values: any) => void;
+}
 
-class FormView extends React.PureComponent<{schema: Jason.Schema, name: string, validate: Jason.Validate}> {
+class FormView extends React.PureComponent<FormViewProps> {
+
+    constructor(props: FormViewProps) {
+        super(props);
+        this.reset = this.reset.bind(this);
+    }
+
+    reset() {
+        this.props.reset(this.props.name, setDefaults(this.props.schema, {}, INITIAL_VALUES));
+    }
+
     render() {
         return <div>
             <InjectedRenderForm
@@ -301,6 +319,12 @@ class FormView extends React.PureComponent<{schema: Jason.Schema, name: string, 
                 validate={this.props.validate}
                 initialValues={setDefaults(this.props.schema, {}, INITIAL_VALUES)}
                 />
+            <div className="button-row">
+                { <Button onClick={this.reset}>Reset</Button> }
+                { <Button bsStyle={'success'} onClick={this.props.showComplete}>Finish</Button> }
+                { <Button bsStyle={'info'} onClick={this.props.showPreview}>Preview</Button> }
+            </div>
+
         </div>
     }
 }
@@ -470,16 +494,21 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
         if(!type) {
             return false;
         }
+        const hasWizard = !!type.schema.wizard;
         return  <Grid fluid>
         <Col md={6} mdOffset={3}>
-        <Tabs defaultActiveKey={3} id="tab-view" unmountOnExit={true}>
+        <Tabs defaultActiveKey={hasWizard ? 3 : 2} id="tab-view" unmountOnExit={true} key={name}>
             {/* <Tab eventKey={1} title="Schema">
                 <SchemaView schema={type.schema} />
             </Tab> */ }
              <Tab eventKey={2} title="Form">
-                <FormView schema={type.schema} validate={type.validate} name={name} />
+                <FormView schema={type.schema} validate={type.validate} name={name}
+                showPreview={this.props.showPreview}
+                showComplete={this.props.showComplete}
+                reset={this.props.reset}
+                />
             </Tab>
-            {type.schema.wizard && <Tab eventKey={3} title="Wizard">
+            {hasWizard && <Tab eventKey={3} title="Wizard">
                 <ConnectedWizardView
                 schema={type.schema}
                 validate={type.validate}
