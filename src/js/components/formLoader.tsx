@@ -273,7 +273,7 @@ class RenderForm extends React.PureComponent<InjectedFormProps & {schema: Jason.
             <p/>
                 <FormSet schema={schema} selector={formValueSelector(this.props.form)} showTitle={false}/>
                 { this.props.error && <div className="alert alert-danger">
-                { this.props.error }
+                { (this.props.error as any).map((error: string, index: number) => <div key={index}>{ error } </div>) }
                 </div> }
         </Form>
     }
@@ -487,7 +487,7 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
                 name={name}
                 showPreview={this.props.showPreview}
                 showComplete={this.props.showComplete}
-                reset={this.props.reset}/>
+                reset={this.props.reset} />
             </Tab> }
         </Tabs>
         </Col>
@@ -579,6 +579,7 @@ export const CheckboxFieldRow = FieldRow(CheckboxField);
 class SchemaField extends React.PureComponent<WrappedFieldProps & {category: string}> {
     render() {
         return <SelectField meta={this.props.meta} input={this.props.input}>
+        { !templateSchemas[this.props.category].schemas[this.props.input.value] && <option value={this.props.input.value} disabled>Please select...</option> }
             { Object.keys(templateSchemas[this.props.category].schemas).map((key: string) => {
                 return <option key={key} value={key}>{ templateSchemas[this.props.category].schemas[key].schema.title }</option>
             }) }
