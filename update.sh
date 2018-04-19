@@ -4,7 +4,7 @@ rm -rf node_modules/anthony-harper-templates
 
 yarn install --check-files
 rm serviceIsLive.flag
-pm2 stop ah.config.json
+pm2 stop jf.config.json
 NODE_ENV=production webpack
-pm2 start ah.config.json --env production
+pm2 start jf.config.json --env production
 
