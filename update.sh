@@ -1,8 +1,9 @@
 git pull
-rm -rf node_modules/anthony-harper-templates
+rm -rf node_modules/good-companies-templates
+rm -rf node_modules/el-templates
 
 
-yarn install --check-files
+yarn install
 rm serviceIsLive.flag
 pm2 stop jf.config.json
 NODE_ENV=production webpack
