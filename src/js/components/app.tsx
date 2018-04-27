@@ -11,7 +11,7 @@ export class App extends React.PureComponent<{}> {
     render() {
         return <div>
             <Header />
-            <FormLoader initialValues={{category: 'Evolution Templates', schema: 'blank'}} />
+            <FormLoader initialValues={{category: 'Evolution Templates', schema: 'letter'}} />
             <Modals />
         </div>
 

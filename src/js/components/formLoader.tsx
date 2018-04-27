@@ -17,7 +17,7 @@ function isCheckbox(enums : (string | boolean)[]) {
     return enums.length === 2 && ((enums[0] === false && enums[1] === true) || (enums[1] === false && enums[0] === true));
 }
 
-const INITIAL_VALUES = {};
+const INITIAL_VALUES = {} as any;
 
 
 interface FormSetProps {

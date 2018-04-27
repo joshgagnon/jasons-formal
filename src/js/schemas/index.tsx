@@ -45,4 +45,5 @@ const templateSchemas : Jason.TemplateSchemas = {
     }
 }
 
+console.log(templateSchemas);
 export default templateSchemas;

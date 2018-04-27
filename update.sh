@@ -3,7 +3,7 @@ rm -rf node_modules/good-companies-templates
 rm -rf node_modules/el-templates
 
 
-yarn install
+yarn install --check-files
 rm serviceIsLive.flag
 pm2 stop jf.config.json
 NODE_ENV=production webpack
