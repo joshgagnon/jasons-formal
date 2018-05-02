@@ -17,7 +17,10 @@ function isCheckbox(enums : (string | boolean)[]) {
     return enums.length === 2 && ((enums[0] === false && enums[1] === true) || (enums[1] === false && enums[0] === true));
 }
 
-const INITIAL_VALUES = {} as any;
+const INITIAL_VALUES = {
+"recipient":{"individuals":[{"_keyIndex":1}],"contactMethod":{"address":{"country":"New Zealand"},"method":"email","email":"hfdg"},"recipientType":"company","companyName":"sdfgh","contact":"sdfg"},"matter":{"status":{"mode":"No Status"},"matterId":"25"},"sender":{"name":"dsfg","title":"sdf","phone":"sdfg","mobile":"dsf","email":"sdfg"},"copyTo":[],"dateString":"1 April 2018","subject":"dfhgj","filename":"letter"
+
+} as any;
 
 
 interface FormSetProps {
