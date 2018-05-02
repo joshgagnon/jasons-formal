@@ -258,3 +258,6 @@ declare module 'react-widgets-moment' {
     export = momentLocalizer;
 }
 
+export declare module Jason {
+
+}
