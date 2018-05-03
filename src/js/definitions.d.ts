@@ -1,6 +1,6 @@
 declare let DEV : boolean;
 
-declare namespace Jason {
+export declare namespace Jason {
 
     type SelectorType = (state: any, ...field: string[]) => any;
 
@@ -92,7 +92,7 @@ declare namespace Jason {
 
 
 
-declare namespace Jason.Actions {
+export declare namespace Jason.Actions {
     const enum Types {
         RENDER = 'RENDER',
         UPDATE_RENDER = 'UPDATE_RENDER',
@@ -258,6 +258,4 @@ declare module 'react-widgets-moment' {
     export = momentLocalizer;
 }
 
-export declare module Jason {
 
-}
