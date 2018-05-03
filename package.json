@@ -11,12 +11,12 @@
     "test-coverage": "BLUEBIRD_WARNINGS=0 NODE_ENV=test nyc --reporter=html --reporter=text  _mocha -- --recursive test --compilers js:babel-core/register --timeout 45000",
     "test-mocha": "BLUEBIRD_WARNINGS=0 NODE_ENV=test  _mocha --recursive test --compilers js:babel-core/register --timeout 45000",
     "test": "BLUEBIRD_WARNINGS=0 NODE_ENV=test nyc  --reporter=html --reporter=text _mocha --recursive test --compilers js:babel-core/register --timeout 45000",
-    "build-lib": "tsc src/js/**/* -d --outDir lib -d -jsx react --lib es7,dom --experimentalDecorators true --allowSyntheticDefaultImports true --module commonjs --target es5",
+    "build-lib": "tsc -p lib",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/joshgagnon/anthony-harper.git"
+    "url": "git://github.com/joshgagnon/jasons-formal.git"
   },
   "author": "",
   "devDependencies": {
