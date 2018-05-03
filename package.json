@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "",
   "engines": {},
-  "main": "./src/js/main.tsx",
+  "main": "./lib/main.tsx",
   "scripts": {
     "dev": "node ./node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline",
     "build": "NODE_ENV=production webpack -p ",
@@ -11,7 +11,7 @@
     "test-coverage": "BLUEBIRD_WARNINGS=0 NODE_ENV=test nyc --reporter=html --reporter=text  _mocha -- --recursive test --compilers js:babel-core/register --timeout 45000",
     "test-mocha": "BLUEBIRD_WARNINGS=0 NODE_ENV=test  _mocha --recursive test --compilers js:babel-core/register --timeout 45000",
     "test": "BLUEBIRD_WARNINGS=0 NODE_ENV=test nyc  --reporter=html --reporter=text _mocha --recursive test --compilers js:babel-core/register --timeout 45000",
-    "build-lib": "tsc src/js/* --outDir lib -d -jsx react",
+    "build-lib": "tsc src/js/**/* -d --outDir lib -d -jsx react --lib es7,dom --experimentalDecorators true --allowSyntheticDefaultImports true --module commonjs --target es5",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
@@ -63,7 +63,7 @@
     "react-bootstrap": "^0.31.5",
     "react-dom": "^16.2.0",
     "react-flip-move": "^3.0.0",
-    "react-pdf-component": "github:joshgagnon/react-pdfjs#de7d67a",
+    "react-pdf-component": "github:joshgagnon/react-pdfjs#de7d67ac24a30d435f8f69ca28a82b4be66067d3",
     "react-redux": "^5.0.6",
     "react-router": "^3.0.3",
     "react-router-redux": "^4.0.7",

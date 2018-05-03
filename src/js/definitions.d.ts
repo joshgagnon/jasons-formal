@@ -1,6 +1,6 @@
 declare let DEV : boolean;
 
-export declare namespace Jason {
+declare namespace Jason {
 
     type SelectorType = (state: any, ...field: string[]) => any;
 
@@ -14,7 +14,7 @@ export declare namespace Jason {
     interface Confirmation {
         title: string,
         message: string,
-        acceptLabel: string,
+    acceptLabel: string,
         rejectLabel: string,
         acceptActions?: any[],
         rejectActions?: any[]
@@ -92,29 +92,31 @@ export declare namespace Jason {
 
 
 
-export declare namespace Jason.Actions {
+declare namespace Jason.Actions {
+
+    const PREFIX = '@@JASONS_FORMAL/'
     const enum Types {
-        RENDER = 'RENDER',
-        UPDATE_RENDER = 'UPDATE_RENDER',
-        REQUEST_SAVED_LIST = 'REQUEST_SAVED_LIST',
-        UPDATE_SAVED_LIST = 'UPDATE_SAVED_LIST',
-        SHOW_CONFIRMATION = 'SHOW_CONFIRMATION',
-        HIDE_CONFIRMATION = 'HIDE_CONFIRMATION',
-        SAVE_STATE = 'SAVE_STATE',
-        LOAD_STATE = 'LOAD_STATE',
-        DELETE_STATE = 'DELETE_STATE',
-        SHOW_SAVE = 'SHOW_SAVE',
-        HIDE_SAVE = 'HIDE_SAVE',
-        SHOW_LOAD = 'SHOW_LOAD',
-        HIDE_LOAD = 'HIDE_LOAD',
-        SHOW_RESTORE = 'SHOW_RESTORE',
-        HIDE_RESTORE = 'HIDE_RESTORE',
-        SHOW_COMPLETE = 'SHOW_COMPLETE',
-        HIDE_COMPLETE = 'HIDE_COMPLETE',
-        SHOW_PREVIEW = 'SHOW_PREVIEW',
-        HIDE_PREVIEW = 'HIDE_PREVIEW',
-        DOWNLOAD = 'DOWNLOAD',
-        SET_WIZARD_PAGE = 'SET_WIZARD_PAGE'
+        RENDER =  '@@JASONS_FORMAL/RENDER',
+        UPDATE_RENDER = '@@JASONS_FORMAL/UPDATE_RENDER',
+        REQUEST_SAVED_LIST =  '@@JASONS_FORMAL/REQUEST_SAVED_LIST',
+        UPDATE_SAVED_LIST = '@@JASONS_FORMAL/UPDATE_SAVED_LIST',
+        SHOW_CONFIRMATION =  '@@JASONS_FORMAL/SHOW_CONFIRMATION',
+        HIDE_CONFIRMATION =  '@@JASONS_FORMAL/HIDE_CONFIRMATION',
+        SAVE_STATE =  '@@JASONS_FORMAL/SAVE_STATE',
+        LOAD_STATE =  '@@JASONS_FORMAL/LOAD_STATE',
+        DELETE_STATE =  '@@JASONS_FORMAL/DELETE_STATE',
+        SHOW_SAVE =  '@@JASONS_FORMAL/SHOW_SAVE',
+        HIDE_SAVE =  '@@JASONS_FORMAL/HIDE_SAVE',
+        SHOW_LOAD = '@@JASONS_FORMAL/SHOW_LOAD',
+        HIDE_LOAD = '@@JASONS_FORMAL/HIDE_LOAD',
+        SHOW_RESTORE = '@@JASONS_FORMAL/SHOW_RESTORE',
+        HIDE_RESTORE = '@@JASONS_FORMAL/HIDE_RESTORE',
+        SHOW_COMPLETE = '@@JASONS_FORMAL/SHOW_COMPLETE',
+        HIDE_COMPLETE = '@@JASONS_FORMAL/HIDE_COMPLETE',
+        SHOW_PREVIEW = '@@JASONS_FORMAL/SHOW_PREVIEW',
+        HIDE_PREVIEW = '@@JASONS_FORMAL/HIDE_PREVIEW',
+        DOWNLOAD = '@@JASONS_FORMAL/DOWNLOAD',
+        SET_WIZARD_PAGE = '@@JASONS_FORMAL/SET_WIZARD_PAGE'
 
     }
 
@@ -257,5 +259,6 @@ declare module 'react-widgets-moment' {
     namespace momentLocalizer {}
     export = momentLocalizer;
 }
+
 
 
