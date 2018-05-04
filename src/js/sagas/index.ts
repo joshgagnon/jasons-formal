@@ -7,16 +7,10 @@ import { updateRender, updateSavedList, requestSavedList, hideComplete } from '.
 import * as Filesaver from 'file-saver';
 
 
-export default function *rootSaga(): any {
-    yield all([
-        renderSaga(),
-        downloadSaga(),
-    ]);
-}
 
 
 
-function *renderSaga() {
+export function *renderSaga() : any {
     yield takeEvery(Jason.Actions.Types.RENDER, render);
     function *render(action: Jason.Actions.Render) {
         yield put(updateRender({
@@ -40,7 +34,7 @@ function *renderSaga() {
 }
 
 
-function *downloadSaga() {
+export function *downloadSaga() : any {
     yield takeEvery(Jason.Actions.Types.DOWNLOAD, render);
     function *render(action: Jason.Actions.Render) {
         yield put(updateRender({
@@ -173,4 +167,11 @@ function *savedListSaga() {
             }));
         }
     }
+}
+
+export default function *rootSaga(): any {
+    yield all([
+        renderSaga(),
+        downloadSaga(),
+    ]);
 }

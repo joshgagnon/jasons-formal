@@ -5,7 +5,7 @@ import { Router } from 'react-router';
 
 import '../style/style.scss';
 
-interface RootProps {
+export interface RootProps {
     history: any,
     store: any
 }

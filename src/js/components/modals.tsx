@@ -134,7 +134,7 @@ const ConnectedLoadModal = connect<{entries: [Jason.SavedItemSummary], courtCost
     handleClose: () => hideLoad()
 })(reduxForm<{}>({form: 'save'})(SaveModal as any) as any);
 
-interface ConfirmationProps extends Jason.Confirmation{
+export interface ConfirmationProps extends Jason.Confirmation{
     hide: () => void,
     accept: () => void,
     reject: () => void
@@ -177,7 +177,7 @@ const ConnectedConfirmationDialog = connect((state: Jason.State) => ({
     }
 }})(ConfirmationDialog as any)
 
-interface RestoreProps {
+export interface RestoreProps {
     handleClose: () => void;
     setForm: (name: string, args: any) => void;
 }
@@ -359,7 +359,7 @@ export class Modals extends React.PureComponent<{downloading: boolean, showing: 
 const ConnectedModals = connect((state: Jason.State) => ({
     downloading: state.document.downloadStatus === Jason.DownloadStatus.InProgress,
     showing: state.dialogs.showing
-}))(Modals as any)
+}))(Modals as any) as any;
 
 export default ConnectedModals;
 

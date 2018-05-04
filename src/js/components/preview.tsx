@@ -24,11 +24,11 @@ export function buildRenderObject(filename: string, category: string, schemaName
 }
 
 
-interface UnconnectedPDFPreviewProps {
+export interface UnconnectedPDFPreviewProps {
 
 }
 
-interface PDFPreviewProps extends UnconnectedPDFPreviewProps {
+export interface PDFPreviewProps extends UnconnectedPDFPreviewProps {
     data?: any;
     downloadStatus: Jason.DownloadStatus
 }
@@ -50,14 +50,14 @@ const PDFPreview = connect((state : Jason.State, ownProps) => ({
     downloadStatus: state.document.downloadStatus
 }))(UnconnectedPDFPreview as any);
 
-interface UnconnectedPreviewProps {
+export interface UnconnectedPreviewProps {
    category: string,
    schemaName: string,
    form: string,
    selector: Jason.SelectorType
 }
 
-interface PreviewProps extends UnconnectedPreviewProps {
+export interface PreviewProps extends UnconnectedPreviewProps {
      render: (data: Jason.Actions.RenderPayload) => void,
      getValues: () => any,
 }

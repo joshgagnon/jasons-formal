@@ -657,7 +657,7 @@ export class FormLoader extends React.PureComponent<InjectedFormProps> {
 }
 
 
+
 export default reduxForm<{}>({
     form: 'formLoader'
-})(FormLoader);
-
+})(FormLoader) as any; //hack
