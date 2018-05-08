@@ -484,7 +484,8 @@ const ConnectedWizardView = connect((state: Jason.State, ownProps: any) => ({
 
 
 
-export class TemplateViews extends React.PureComponent<{category: string, schema: string,
+export class TemplateViews extends React.PureComponent<{
+    category: string, schema: string,
     showPreview : () => void,
     showComplete: () => void,
     reset: (name: string, values: any) => void
@@ -497,9 +498,7 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
             return false;
         }
         const hasWizard = !!type.schema.wizard;
-        return  <Grid fluid>
-        <Col md={6} mdOffset={3}>
-        <Tabs defaultActiveKey={hasWizard ? 3 : 2} id="tab-view" unmountOnExit={true} key={name}>
+        return   <Tabs defaultActiveKey={hasWizard ? 3 : 2} id="tab-view" unmountOnExit={true} key={name}>
             {/* <Tab eventKey={1} title="Schema">
                 <SchemaView schema={type.schema} />
             </Tab> */ }
@@ -521,9 +520,6 @@ export class TemplateViews extends React.PureComponent<{category: string, schema
                 reset={this.props.reset} />
             </Tab> }
         </Tabs>
-        </Col>
-
-        </Grid>
     }
 }
 
@@ -651,11 +647,36 @@ export class FormLoader extends React.PureComponent<InjectedFormProps> {
         </Form>
         </Col>
     </Grid>
-        <InjectedTemplateViews />
+    <Grid fluid>
+        <Col md={6} mdOffset={3}>
+            <InjectedTemplateViews />
+        </Col>
+     </Grid>
     </div>
     }
 }
 
+class UnconnectedSimpleFormLoader extends React.PureComponent<InjectedFormProps> {
+    render() {
+        return <div>
+        <Grid>
+                <Col md={6} mdOffset={3}>
+            <Form  horizontal>
+                <FormGroup controlId="formControlsSelect">
+                        <ControlLabel>Schema</ControlLabel>
+                        <Field name="schema" component={SchemaFieldWithCategory as any} />
+                </FormGroup>
+                </Form>
+                </Col>
+                </Grid>
+         <InjectedTemplateViews />
+    </div>
+    }
+}
+
+export const SimpleFormLoader = reduxForm<{}>({
+    form: 'formLoader'
+})(UnconnectedSimpleFormLoader) as any; //hack
 
 
 export default reduxForm<{}>({

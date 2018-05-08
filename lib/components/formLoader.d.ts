@@ -20,5 +20,6 @@ export declare const CheckboxFieldRow: any;
 export declare class FormLoader extends React.PureComponent<InjectedFormProps> {
     render(): JSX.Element;
 }
+export declare const SimpleFormLoader: any;
 declare const _default: any;
 export default _default;
