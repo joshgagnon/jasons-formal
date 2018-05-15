@@ -3,7 +3,7 @@ import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, For
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
 import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon, ProgressBar, ToggleButtonGroup, DropdownButton, MenuItem, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { componentType, getKey, addItem, setDefaults, getValidate, controlStyle, formatString, getSubSchema, getFieldsFromErrors, suggestions } from 'json-schemer';
+import { componentType, getKey, addItem, setDefaults, getValidate, controlStyle, formatString, getSubSchema, getFieldsFromErrors, suggestions, inputSource } from 'json-schemer';
 import FlipMove from 'react-flip-move';
 import { render, showPreview, showComplete, showConfirmation, showRestore, setWizardPage } from '../actions';
 import PDF from 'react-pdf-component/lib/react-pdf';
@@ -28,7 +28,8 @@ interface FormSetProps {
     showTitle?: boolean,
     name?: string,
     index?: number,
-    selector: Jason.SelectorType
+    selector: Jason.SelectorType;
+    context?: any;
 }
 
 
@@ -45,9 +46,9 @@ class UnconnectedFormSet extends React.PureComponent<FormSetProps> {
             <fieldset>
              { title && showTitle !== false && <legend>{title}</legend>}
                 { Object.keys(schemaProps).map((key, i) => {
-                    return <RenderField key={i} field={schemaProps[key]} name={key} selector={selector} index={index} parentName={name}/>
+                    return <RenderField key={i} field={schemaProps[key]} name={key} selector={selector} index={index} parentName={name} context={this.props.context}/>
                 }) }
-                { subSchema && <FormSet schema={subSchema} name={this.props.name} selector={selector} /> }
+                { subSchema && <FormSet schema={subSchema} name={this.props.name} selector={selector} context={this.props.context} /> }
             </fieldset>
         );
 
@@ -82,29 +83,30 @@ const FormSet = connect<{}, {}, FormSetProps>((state: Jason.State, ownProps: For
 })(UnconnectedFormSet as any);
 
 
-class RenderField extends React.PureComponent<{field: any, name: string, index?: number, parentName?: string, selector: (name: any) => any}> {
+class RenderField extends React.PureComponent<{field: any, name: string, index?: number, parentName?: string, context?: any, selector: (name: any) => any}> {
     render() : false | JSX.Element {
         const { name, field, selector, index } = this.props;
         const title = field.enumeratedTitle ? formatString(field.enumeratedTitle, index+1) : field.title;
+        console.log(this.props.context)
         switch(field.type){
             case 'object': {
                 const deepName = this.props.parentName ? `${this.props.parentName}.${name}` : name;
                 return <FormSection name={name}>
-                        <FormSet schema={(this.props.field as Jason.Schema)} name={deepName} selector={selector} index={index}/>
+                        <FormSet schema={(this.props.field as Jason.Schema)} name={deepName} selector={selector} index={index} context={this.props.context}/>
                     </FormSection>
             }
             case 'array': {
-                return <FieldArray name={name} component={FieldsArray} props={{field: field.items, title: field.title, selector, index}} />
+                return <FieldArray name={name} component={FieldsArray} props={{field: field.items, title: field.title, selector, index}} context={this.props.context} />
             }
             case 'string': {
                 const subType = componentType(field);
                 switch(subType){
                     case 'textarea':
-                        return <Field title={title} name={name} component={TextAreaFieldRow} />
+                        return <Field title={title} name={name} component={TextAreaFieldRow} context={this.props.context} />
                     case 'date':
-                        return <Field title={title} name={name} component={DateFieldRow} formatDate={field.formatDate}/>
+                        return <Field title={title} name={name} component={DateFieldRow} formatDate={field.formatDate} context={this.props.context}/>
                     default:
-                        return <Field title={title} name={name} component={TextFieldRow} />
+                        return <Field title={title} name={name} component={TextFieldRow} context={this.props.context}/>
                 }
             }
             case undefined: {
@@ -112,9 +114,9 @@ class RenderField extends React.PureComponent<{field: any, name: string, index?:
 
                 if(field.enum && field.enum.length > 1){
                     if(isCheckbox(field.enum)){
-                        return <Field title={title} name={name} component={CheckboxFieldRow} />
+                        return <Field title={title} name={name} component={CheckboxFieldRow} context={this.props.context}/>
                     }
-                    return <Field title={title} name={name} component={SelectFieldRow}>
+                    return <Field title={title} name={name} component={SelectFieldRow} context={this.props.context}>
                          <option value="" disabled>Please Select...</option>
                         { field.enum.map((f: string, i: number) => {
                             return <option key={i} value={f}>{field.enumNames ? field.enumNames[i] : f}</option>
@@ -197,10 +199,14 @@ class ListItemControls extends React.PureComponent<any> {
 class FieldsArray extends React.PureComponent<any> {
     add() {
          const { fields, field } = this.props;
-        const suggestionList = suggestions(field);
+        let suggestionList = suggestions(field);
         if(suggestionList){
+            const sourcePath = inputSource(field);
+            if(sourcePath){
+                suggestionList = getFromContext(sourcePath, this.props.context) || [];
+            }
             return <DropdownButton title={ addItem(field) } id={fields.name}>
-                { suggestionList.map((sug: any, index: number) => {
+                { (suggestionList).map((sug: any, index: number) => {
                     return <OverlayTrigger key={index} overlay={<Tooltip id={sug.title}>{sug.title}</Tooltip>}>
                         <MenuItem eventKey={index}  onSelect={() => fields.push({_keyIndex: getKey(), ...sug.value})}>
                           { sug.title }
@@ -224,7 +230,7 @@ class FieldsArray extends React.PureComponent<any> {
             { fields.map((name: any, index: number) => {
                 return <div key={fields.get(index)._keyIndex}>
                     <div style={{position: 'relative', minHeight: inline ? 0 : 70}}>
-                    <RenderField  name={name} field={field} selector={selector} index={index} />
+                    <RenderField  name={name} field={field} selector={selector} index={index} context={this.props.context} />
                     <ListItemControls fields={fields} index={index} numItems={fields.length} name={name} inline={inline}/>
                     </div>
                 </div>
@@ -267,13 +273,13 @@ function FieldRow(Component: any) : any {
 }
 
 
-class RenderForm extends React.PureComponent<InjectedFormProps & {schema: Jason.Schema}> {
+class RenderForm extends React.PureComponent<InjectedFormProps & {schema: Jason.Schema, context: any}> {
 
     render() {
         const { schema } = this.props;
         return <Form horizontal>
             <p/>
-                <FormSet schema={schema} selector={formValueSelector(this.props.form)} showTitle={false}/>
+                <FormSet schema={schema} selector={formValueSelector(this.props.form)} showTitle={false} context={this.props.context}/>
                 { this.props.error && <div className="alert alert-danger">
                 { (this.props.error as any).map((error: string, index: number) => <div key={index}>{ error } </div>) }
                 </div> }
@@ -296,13 +302,13 @@ interface FormViewProps {
     schema: Jason.Schema;
     name: string;
     validate: Jason.Validate;
+    context: any;
     showPreview: () => void;
     showComplete: () => void;
     reset: (name: string, values: any) => void;
 }
 
 class FormView extends React.PureComponent<FormViewProps> {
-
     constructor(props: FormViewProps) {
         super(props);
         this.reset = this.reset.bind(this);
@@ -320,6 +326,7 @@ class FormView extends React.PureComponent<FormViewProps> {
                 key={this.props.name}
                 validate={this.props.validate}
                 initialValues={setDefaults(this.props.schema, {}, INITIAL_VALUES)}
+                context={this.props.context}
                 />
             <div className="button-row">
                 { <Button onClick={this.reset}>Reset</Button> }
@@ -386,6 +393,7 @@ const ConnectedErrors = connect((state: Jason.State, ownProps: any) => {
 
 interface WizardViewProps {
     schema: Jason.Schema,
+    context: any;
     name: string,
     validate: Jason.Validate,
     validatePages: Jason.Validate[],
@@ -463,6 +471,7 @@ class WizardView extends React.PureComponent<WizardViewProps> {
                 destroyOnUnmount={false}
                 forceUnregisterOnUnmount={true}
                 initialValues={setDefaults(this.props.schema, {}, INITIAL_VALUES)}
+                context={this.props.context}
                 />
             <ConnectedErrors ref="errors" name={this.props.name} key={this.props.page} />
             <div className="button-row">
@@ -486,6 +495,7 @@ const ConnectedWizardView = connect((state: Jason.State, ownProps: any) => ({
 
 export class TemplateViews extends React.PureComponent<{
     category: string, schema: string,
+    context: any;
     showPreview : () => void,
     showComplete: () => void,
     reset: (name: string, values: any) => void
@@ -507,6 +517,7 @@ export class TemplateViews extends React.PureComponent<{
                 showPreview={this.props.showPreview}
                 showComplete={this.props.showComplete}
                 reset={this.props.reset}
+                context={this.props.context}
                 />
             </Tab>
             {hasWizard && <Tab eventKey={3} title="Wizard">
@@ -517,20 +528,21 @@ export class TemplateViews extends React.PureComponent<{
                 name={name}
                 showPreview={this.props.showPreview}
                 showComplete={this.props.showComplete}
-                reset={this.props.reset} />
+                reset={this.props.reset}
+                context={this.props.context} />
             </Tab> }
         </Tabs>
     }
 }
 
-const InjectedTemplateViews = connect(undefined, {
+const InjectedTemplateViews = connect<{context: any}>(undefined, {
     showPreview: () => showPreview({}),
     showComplete: () => showComplete({}),
     reset: (formName: string, values: any) => showConfirmation({title: 'Reset Form',
                                   message: 'Are you sure you wish to reset the form?',
                                   rejectLabel: 'Cancel', acceptLabel: 'Reset',
                                   acceptActions: [initialize(formName, values), setWizardPage({name: formName, page: 0})]})
-  })(formValues<any>('category', 'schema')(TemplateViews) as any);
+  })(formValues<any>('category', 'schema')(TemplateViews) as any) as any;
 
 
 class RenderDateTimePicker extends React.PureComponent<WrappedFieldProps & {formatDate: string}> {
@@ -617,7 +629,12 @@ class SchemaField extends React.PureComponent<WrappedFieldProps & {category: str
 const SchemaFieldWithCategory = formValues<any>('category')(SchemaField);
 
 
-export class FormLoader extends React.PureComponent<InjectedFormProps> {
+const getFromContext = (path: string, context: any) => {
+    return (context || {})[path];
+}
+
+
+export class FormLoader extends React.PureComponent<InjectedFormProps& {context?: any}> {
     render() {
         return <div>
 
@@ -649,14 +666,14 @@ export class FormLoader extends React.PureComponent<InjectedFormProps> {
     </Grid>
     <Grid fluid>
         <Col md={6} mdOffset={3}>
-            <InjectedTemplateViews />
+            <InjectedTemplateViews context={this.props.context}/>
         </Col>
      </Grid>
     </div>
     }
 }
 
-class UnconnectedSimpleFormLoader extends React.PureComponent<InjectedFormProps> {
+class UnconnectedSimpleFormLoader extends React.PureComponent<InjectedFormProps & {context?: any}> {
     render() {
         return <div>
         <Grid>
@@ -669,7 +686,7 @@ class UnconnectedSimpleFormLoader extends React.PureComponent<InjectedFormProps>
                 </Form>
                 </Col>
                 </Grid>
-         <InjectedTemplateViews />
+         <InjectedTemplateViews context={this.props.context}/>
     </div>
     }
 }

@@ -227,6 +227,7 @@ declare module 'json-schemer' {
     export function getKey(): string;
     export function addItem(field: any): string;
     export function suggestions(field: any): any;
+    export function inputSource(field: any): any;
     export function controlStyle(field: any): string;
     export function formatString(...args: (string | number)[]): string;
     export function setDefaults(schema: Jason.Schema, context: any, values: any): any;

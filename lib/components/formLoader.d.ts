@@ -5,6 +5,7 @@ export declare const required: (value: any) => string;
 export declare class TemplateViews extends React.PureComponent<{
     category: string;
     schema: string;
+    context: any;
     showPreview: () => void;
     showComplete: () => void;
     reset: (name: string, values: any) => void;
@@ -17,7 +18,9 @@ export declare const TextFieldRow: any;
 export declare const TextAreaFieldRow: any;
 export declare const DateFieldRow: any;
 export declare const CheckboxFieldRow: any;
-export declare class FormLoader extends React.PureComponent<InjectedFormProps> {
+export declare class FormLoader extends React.PureComponent<InjectedFormProps & {
+    context?: any;
+}> {
     render(): JSX.Element;
 }
 export declare const SimpleFormLoader: any;
