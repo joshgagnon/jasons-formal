@@ -1,5 +1,5 @@
 import * as React from "react";
-import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector, getFormValues, initialize, touch, getFormSyncErrors, isDirty } from 'redux-form';
+import { reduxForm, InjectedFormProps, Field, Fields, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector, getFormValues, initialize, touch, getFormSyncErrors, isDirty } from 'redux-form';
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
 import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon, ProgressBar, ToggleButtonGroup, DropdownButton, MenuItem, OverlayTrigger, Tooltip } from 'react-bootstrap';
@@ -21,6 +21,66 @@ const INITIAL_VALUES = {
 
 } as any;
 
+interface SuggestionProps {
+    schema: Jason.Schema,
+    name?: string,
+    selector: Jason.SelectorType;
+    context?: any;
+    fieldNames: string[],
+}
+
+const OverlayMenuItem = (props: {key: number, item: any, onSelect: () => void; handleSelect: (value: any) => void}) => {
+    const { key, item, onSelect: internalOnSelectOverride, handleSelect } = props;
+    return <OverlayTrigger key={key} overlay={<Tooltip id={item.title}>{item.title}</Tooltip>}>
+            <MenuItem eventKey={key}  onSelect={() => { handleSelect(item.value); internalOnSelectOverride(); }}>
+              { item.title }
+        </MenuItem>
+    </OverlayTrigger>
+}
+
+
+class UnconnectedSuggestions extends React.PureComponent<SuggestionProps> {
+    change(values: any) {
+        this.props.fieldNames.map((name: string) => {
+            const field = this.props[name] as any;
+            field.input.onChange(values[name]);
+        });
+    }
+    render() {
+        const { schema, selector, name } = this.props;
+        let suggestionList = suggestions(schema);
+        if(suggestionList){
+            const sourcePath = inputSource(schema);
+            if(sourcePath){
+                suggestionList = getFromContext(sourcePath, this.props.context) || [];
+            }
+            if(!suggestionList.length){
+                return false;
+            }
+            return  <FormGroup>
+                <Col sm={3} className="text-right">
+                    <ControlLabel>Select</ControlLabel>
+                </Col>
+                <Col sm={7}>
+                <DropdownButton title={''} id={name}>
+                { (suggestionList).map((sug: any, index: number) => {
+                    return <OverlayMenuItem key={index} item={sug} handleSelect={() => this.change(sug.value)} />
+                }) }
+            </DropdownButton>
+            </Col>
+            </FormGroup>
+        }
+        return false;
+    }
+}
+
+const Suggestions = connect<{}, {}, FormSetProps>((state: Jason.State, ownProps: SuggestionProps) => {
+
+    //const value = //(ownProps.selector(state, ownProps.name) || {})
+    return {  }
+
+})(UnconnectedSuggestions as any);
+
 
 interface FormSetProps {
     schema: Jason.Schema,
@@ -41,12 +101,16 @@ class UnconnectedFormSet extends React.PureComponent<FormSetProps> {
         if(!properties){
             return false;
         }
-
+        let keys = Object.keys(schemaProps);
+        if(subSchema){
+            keys = keys.concat(Object.keys(subSchema));
+        }
         return (
             <fieldset>
              { title && showTitle !== false && <legend>{title}</legend>}
+             {<Fields names={keys} component={Suggestions} schema={schema} name={this.props.name} fieldNames={keys} selector={selector} context={this.props.context} /> }
                 { Object.keys(schemaProps).map((key, i) => {
-                    return <RenderField key={i} field={schemaProps[key]} name={key} selector={selector} index={index} parentName={name} context={this.props.context}/>
+                    return <RenderField key={i} field={schemaProps[key]} name={key} selector={selector} index={index} parentName={name} context={this.props.context} />
                 }) }
                 { subSchema && <FormSet schema={subSchema} name={this.props.name} selector={selector} context={this.props.context} /> }
             </fieldset>
@@ -87,7 +151,6 @@ class RenderField extends React.PureComponent<{field: any, name: string, index?:
     render() : false | JSX.Element {
         const { name, field, selector, index } = this.props;
         const title = field.enumeratedTitle ? formatString(field.enumeratedTitle, index+1) : field.title;
-        console.log(this.props.context)
         switch(field.type){
             case 'object': {
                 const deepName = this.props.parentName ? `${this.props.parentName}.${name}` : name;
@@ -111,7 +174,6 @@ class RenderField extends React.PureComponent<{field: any, name: string, index?:
             }
             case undefined: {
                 // the > 1 check is a easy way to not render the oneOf match structures (causes a duplication of the field)
-
                 if(field.enum && field.enum.length > 1){
                     if(isCheckbox(field.enum)){
                         return <Field title={title} name={name} component={CheckboxFieldRow} context={this.props.context}/>
@@ -207,11 +269,7 @@ class FieldsArray extends React.PureComponent<any> {
             }
             return <DropdownButton title={ addItem(field) } id={fields.name}>
                 { (suggestionList).map((sug: any, index: number) => {
-                    return <OverlayTrigger key={index} overlay={<Tooltip id={sug.title}>{sug.title}</Tooltip>}>
-                        <MenuItem eventKey={index}  onSelect={() => fields.push({_keyIndex: getKey(), ...sug.value})}>
-                          { sug.title }
-                    </MenuItem>
-                        </OverlayTrigger>
+                 return <OverlayMenuItem key={index} item={sug} handleSelect={() => fields.push({_keyIndex: getKey(), ...sug.value})} />
                 }) }
                  <MenuItem divider />
                  <MenuItem eventKey={suggestionList.length} onSelect={() => fields.push({_keyIndex: getKey()})}>Custom</MenuItem>
@@ -233,6 +291,7 @@ class FieldsArray extends React.PureComponent<any> {
                     <RenderField  name={name} field={field} selector={selector} index={index} context={this.props.context} />
                     <ListItemControls fields={fields} index={index} numItems={fields.length} name={name} inline={inline}/>
                     </div>
+                    { index < fields.length - 1 && <hr/>}
                 </div>
             }) }
             </FlipMove>
