@@ -29,10 +29,10 @@ interface SuggestionProps {
     fieldNames: string[],
 }
 
-const OverlayMenuItem = (props: {key: number, item: any, onSelect: () => void; handleSelect: (value: any) => void}) => {
-    const { key, item, onSelect: internalOnSelectOverride, handleSelect } = props;
+const OverlayMenuItem = (props: {key: number, item: any,  onSelect?: () => void; handleSelect: (value: any) => void}) => {
+    const { key, item,  handleSelect, onSelect } = props;
     return <OverlayTrigger key={key} overlay={<Tooltip id={item.title}>{item.title}</Tooltip>}>
-            <MenuItem eventKey={key}  onSelect={() => { handleSelect(item.value); internalOnSelectOverride(); }}>
+            <MenuItem eventKey={key}  onSelect={() => { handleSelect(item.value); onSelect(); }}>
               { item.title }
         </MenuItem>
     </OverlayTrigger>
@@ -42,7 +42,7 @@ const OverlayMenuItem = (props: {key: number, item: any, onSelect: () => void; h
 class UnconnectedSuggestions extends React.PureComponent<SuggestionProps> {
     change(values: any) {
         this.props.fieldNames.map((name: string) => {
-            const field = this.props[name] as any;
+            const field = (this.props as any)[name] as any;
             field.input.onChange(values[name]);
         });
     }
@@ -59,7 +59,7 @@ class UnconnectedSuggestions extends React.PureComponent<SuggestionProps> {
             }
             return  <FormGroup>
                 <Col sm={3} className="text-right">
-                    <ControlLabel>Select</ControlLabel>
+                    <ControlLabel>Lookup</ControlLabel>
                 </Col>
                 <Col sm={7}>
                 <DropdownButton title={''} id={name}>
@@ -86,6 +86,7 @@ interface FormSetProps {
     schema: Jason.Schema,
     subSchema?: Jason.Schema,
     showTitle?: boolean,
+    title?: string,
     name?: string,
     index?: number,
     selector: Jason.SelectorType;
@@ -95,7 +96,7 @@ interface FormSetProps {
 
 class UnconnectedFormSet extends React.PureComponent<FormSetProps> {
     render() {
-        const { schema, subSchema, selector, index, name, showTitle } = this.props;
+        const { schema, subSchema, selector, index, name, showTitle, title: parentTitle } = this.props;
         const { properties, title } = schema;
         const schemaProps = properties;
         if(!properties){
@@ -107,8 +108,8 @@ class UnconnectedFormSet extends React.PureComponent<FormSetProps> {
         }
         return (
             <fieldset>
-             { title && showTitle !== false && <legend>{title}</legend>}
-             {<Fields names={keys} component={Suggestions} schema={schema} name={this.props.name} fieldNames={keys} selector={selector} context={this.props.context} /> }
+             { (parentTitle || title) && <legend>{parentTitle || title}</legend>}
+             {<Fields key={index} names={keys} component={Suggestions} schema={schema} name={this.props.name} fieldNames={keys} selector={selector} context={this.props.context} /> }
                 { Object.keys(schemaProps).map((key, i) => {
                     return <RenderField key={i} field={schemaProps[key]} name={key} selector={selector} index={index} parentName={name} context={this.props.context} />
                 }) }
@@ -155,7 +156,7 @@ class RenderField extends React.PureComponent<{field: any, name: string, index?:
             case 'object': {
                 const deepName = this.props.parentName ? `${this.props.parentName}.${name}` : name;
                 return <FormSection name={name}>
-                        <FormSet schema={(this.props.field as Jason.Schema)} name={deepName} selector={selector} index={index} context={this.props.context}/>
+                        <FormSet schema={(this.props.field as Jason.Schema)} name={deepName} selector={selector} index={index} context={this.props.context} title={title}/>
                     </FormSection>
             }
             case 'array': {
@@ -282,11 +283,12 @@ class FieldsArray extends React.PureComponent<any> {
     render() {
         const { fields, field, title, selector } = this.props;
         const inline = controlStyle(field) === 'inline';
+        console.log(this.props)
         return <fieldset className="list">
             { title && <legend>{ title }</legend>}
             <FlipMove duration={250} easing="ease-out">
             { fields.map((name: any, index: number) => {
-                return <div key={fields.get(index)._keyIndex}>
+                return <div key={fields.get(index)._keyIndex} className="list-item">
                     <div style={{position: 'relative', minHeight: inline ? 0 : 70}}>
                     <RenderField  name={name} field={field} selector={selector} index={index} context={this.props.context} />
                     <ListItemControls fields={fields} index={index} numItems={fields.length} name={name} inline={inline}/>
@@ -295,7 +297,11 @@ class FieldsArray extends React.PureComponent<any> {
                 </div>
             }) }
             </FlipMove>
-            <div className="text-center">
+            { this.props.meta.error && <div className="alert alert-danger">
+                { (this.props.meta.error as any).map((error: string, index: number) => <div key={index}>{ error } </div>) }
+            </div> }
+
+            <div className="text-center form-group">
                 { this.add() }
           </div>
             </fieldset>
@@ -695,7 +701,7 @@ const getFromContext = (path: string, context: any) => {
 
 export class FormLoader extends React.PureComponent<InjectedFormProps& {context?: any}> {
     render() {
-        return <div>
+        return <div className="jasons-formal">
 
         <Grid>
                 <Col md={6} mdOffset={3}>
@@ -734,7 +740,7 @@ export class FormLoader extends React.PureComponent<InjectedFormProps& {context?
 
 class UnconnectedSimpleFormLoader extends React.PureComponent<InjectedFormProps & {context?: any}> {
     render() {
-        return <div>
+        return <div className="jasons-formal">
         <Grid>
                 <Col md={6} mdOffset={3}>
             <Form  horizontal>

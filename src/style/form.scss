@@ -1,0 +1,53 @@
+.jasons-formal{
+    .button-row{
+        text-align:center;
+        margin: 1em 0;
+        button {
+            margin: 0 4px;
+        }
+    }
+
+    input.checkbox.form-control {
+        box-shadow: none;
+    }
+    fieldset legend{
+        text-align:left;
+        color:#636b6f;
+            padding-left: 30px;
+    }
+
+    form fieldset{
+        fieldset {
+            fieldset{
+
+            }
+        }
+
+        fieldset.list{
+            & > legend {
+
+            }
+        }
+    }
+
+    .dropdown-menu > li > a {
+        max-width: 300px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .list .list-item > div > fieldset legend {
+        border-bottom: none;
+        font-size: 1em;
+        margin-bottom: 0;
+        text-align: center;
+        color:#636b6f;
+        font-weight:bold;
+    }
+
+    form > fieldset > fieldset{
+            margin-bottom: 30px;
+    }
+
+}
