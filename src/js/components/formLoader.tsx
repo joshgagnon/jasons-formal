@@ -371,6 +371,7 @@ interface FormViewProps {
     showPreview: () => void;
     showComplete: () => void;
     reset: (name: string, values: any) => void;
+    initialValues?: any;
 }
 
 class FormView extends React.PureComponent<FormViewProps> {
@@ -380,7 +381,7 @@ class FormView extends React.PureComponent<FormViewProps> {
     }
 
     reset() {
-        this.props.reset(this.props.name, setDefaults(this.props.schema, {}, INITIAL_VALUES));
+        this.props.reset(this.props.name, setDefaults(this.props.schema, {}, this.props.initialValues || INITIAL_VALUES));
     }
 
     render() {
@@ -390,7 +391,7 @@ class FormView extends React.PureComponent<FormViewProps> {
                 form={this.props.name}
                 key={this.props.name}
                 validate={this.props.validate}
-                initialValues={setDefaults(this.props.schema, {}, INITIAL_VALUES)}
+                initialValues={setDefaults(this.props.schema, {}, this.props.initialValues || INITIAL_VALUES)}
                 context={this.props.context}
                 />
             <div className="button-row">
@@ -466,7 +467,8 @@ interface WizardViewProps {
     showComplete: () => void;
     reset: (name: string, values: any) => void;
     setWizardPage: (page: number) => void;
-    page: number
+    page: number;
+    initialValues?: any;
 }
 
 
@@ -515,7 +517,7 @@ class WizardView extends React.PureComponent<WizardViewProps> {
     }
 
     reset() {
-        this.props.reset(this.props.name, setDefaults(this.props.schema, {}, INITIAL_VALUES));
+        this.props.reset(this.props.name, setDefaults(this.props.schema, {}, this.props.initialValues || INITIAL_VALUES));
     }
 
     render() {
@@ -535,7 +537,7 @@ class WizardView extends React.PureComponent<WizardViewProps> {
                 validate={this.props.validatePages[this.props.page]}
                 destroyOnUnmount={false}
                 forceUnregisterOnUnmount={true}
-                initialValues={setDefaults(this.props.schema, {}, INITIAL_VALUES)}
+                initialValues={setDefaults(this.props.schema, {}, this.props.initialValues || INITIAL_VALUES)}
                 context={this.props.context}
                 />
             <ConnectedErrors ref="errors" name={this.props.name} key={this.props.page} />
@@ -563,7 +565,8 @@ export class TemplateViews extends React.PureComponent<{
     context: any;
     showPreview : () => void,
     showComplete: () => void,
-    reset: (name: string, values: any) => void
+    reset: (name: string, values: any) => void,
+    initialValues: any;
 }> {
     render() {
         const { category, schema } = this.props;
@@ -583,6 +586,7 @@ export class TemplateViews extends React.PureComponent<{
                 showComplete={this.props.showComplete}
                 reset={this.props.reset}
                 context={this.props.context}
+                initialValues={this.props.initialValues}
                 />
             </Tab>
             {hasWizard && <Tab eventKey={3} title="Wizard">
@@ -594,7 +598,10 @@ export class TemplateViews extends React.PureComponent<{
                 showPreview={this.props.showPreview}
                 showComplete={this.props.showComplete}
                 reset={this.props.reset}
-                context={this.props.context} />
+                context={this.props.context}
+                intitalValues={this.props.initialValues}
+                 />
+                }
             </Tab> }
         </Tabs>
     }
@@ -738,7 +745,7 @@ export class FormLoader extends React.PureComponent<InjectedFormProps& {context?
     }
 }
 
-class UnconnectedSimpleFormLoader extends React.PureComponent<InjectedFormProps & {context?: any}> {
+class UnconnectedSimpleFormLoader extends React.PureComponent<InjectedFormProps & {context?: any, formValues?: any}> {
     render() {
         return <div className="jasons-formal">
         <Grid>
@@ -751,7 +758,7 @@ class UnconnectedSimpleFormLoader extends React.PureComponent<InjectedFormProps 
                 </Form>
                 </Col>
                 </Grid>
-         <InjectedTemplateViews context={this.props.context}/>
+         <InjectedTemplateViews context={this.props.context} initialValues={this.props.formValues}/>
     </div>
     }
 }

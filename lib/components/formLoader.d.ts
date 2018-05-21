@@ -9,6 +9,7 @@ export declare class TemplateViews extends React.PureComponent<{
     showPreview: () => void;
     showComplete: () => void;
     reset: (name: string, values: any) => void;
+    initialValues: any;
 }> {
     render(): false | JSX.Element;
 }
