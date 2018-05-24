@@ -19,6 +19,55 @@ function isCheckbox(enums : (string | boolean)[]) {
 
 const INITIAL_VALUES = {
 
+
+        "civNumber": "CIV X",
+        "copyTo": [],
+        "dateString": "1 May 2018",
+        "defendants": [
+            {
+                "_keyIndex": 6,
+                "name": "Mike Defendant"
+            }
+        ],
+        "documents": [
+            {
+                "_keyIndex": 7,
+                "name": "1234123412"
+            }
+        ],
+        "filename": "Filing Letter",
+        "filingFee": {"include": true, "amount": "323243"},
+        "plantiffs": [
+            {
+                "_keyIndex": 5,
+                "name": "Barry Plantiff"
+            }
+        ],
+        "recipient": {
+            "contactMethod": {
+                "address": {
+                    "country": "New Zealand"
+                },
+                "email": "pewpwe@email.com",
+                "method": "email"
+            },
+            "individuals": [
+                {
+                    "_keyIndex": 3,
+                    "firstName": "Test",
+                    "surname": "Name"
+                }
+            ],
+            "recipientType": "individuals"
+        },
+        "senders": [
+            {
+                "_keyIndex": 4,
+                "email": "asdf",
+                "firstName": "x"
+            }
+        ]
+
 } as any;
 
 interface SuggestionProps {
@@ -128,7 +177,7 @@ const FormSet = connect<{}, {}, FormSetProps>((state: Jason.State, ownProps: For
         let selectKey;
         const { properties } = ownProps.schema;
         Object.keys(properties).map((key, i) => {
-            if(properties[key].enum){
+            if(properties[key].enum || properties[key].type === 'boolean'){
                 selectKey = key;
             }
         });
@@ -173,6 +222,12 @@ class RenderField extends React.PureComponent<{field: any, name: string, index?:
                         return <Field title={title} name={name} component={TextFieldRow} context={this.props.context}/>
                 }
             }
+            case 'number': {
+
+                return <Field title={title} name={name} component={NumberFieldRow} context={this.props.context}/>
+            }
+            case 'boolean':
+                return <Field title={title} name={name} component={CheckboxFieldRow} context={this.props.context}/>
             case undefined: {
                 // the > 1 check is a easy way to not render the oneOf match structures (causes a duplication of the field)
                 if(field.enum && field.enum.length > 1){
@@ -283,7 +338,6 @@ class FieldsArray extends React.PureComponent<any> {
     render() {
         const { fields, field, title, selector } = this.props;
         const inline = controlStyle(field) === 'inline';
-        console.log(this.props)
         return <fieldset className="list">
             { title && <legend>{ title }</legend>}
             <FlipMove duration={250} easing="ease-out">
@@ -667,6 +721,13 @@ class TextField extends React.PureComponent<WrappedFieldProps> {
     }
 }
 
+class NumberField extends React.PureComponent<WrappedFieldProps> {
+    render() {
+        return <FormControl {...this.props.input} componentClass="input" type="number"/>
+    }
+}
+
+
 class TextAreaField extends React.PureComponent<WrappedFieldProps> {
     render() {
         return <FormControl {...this.props.input} componentClass="textarea" />
@@ -685,6 +746,7 @@ export const TextFieldRow = FieldRow(TextField);
 export const TextAreaFieldRow = FieldRow(TextAreaField);
 export const DateFieldRow = FieldRow(DateField);
 export const CheckboxFieldRow = FieldRow(CheckboxField);
+export const NumberFieldRow = FieldRow(NumberField);
 
 
 class SchemaField extends React.PureComponent<WrappedFieldProps & {category: string}> {

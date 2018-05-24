@@ -11,7 +11,7 @@ export class App extends React.PureComponent<{}> {
     render() {
         return <div>
             <Header />
-            <FormLoader initialValues={{category: 'Evolution Templates', schema: 'letter'}} context={{'users': [{'title': 'xx', 'value': {'firstName': 'x', email: 'asdf'}},{'title': 'yy', 'value': {'firstName': 'y', email: 'asdfasdfa'}} ],
+            <FormLoader initialValues={{category: 'Evolution Templates', schema: 'service_letter'}} context={{'users': [{'title': 'xx', 'value': {'firstName': 'x', email: 'asdf'}},{'title': 'yy', 'value': {'firstName': 'y', email: 'asdfasdfa'}} ],
 
 
 

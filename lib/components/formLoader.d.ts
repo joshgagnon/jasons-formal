@@ -19,6 +19,7 @@ export declare const TextFieldRow: any;
 export declare const TextAreaFieldRow: any;
 export declare const DateFieldRow: any;
 export declare const CheckboxFieldRow: any;
+export declare const NumberFieldRow: any;
 export declare class FormLoader extends React.PureComponent<InjectedFormProps & {
     context?: any;
 }> {
