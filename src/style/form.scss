@@ -50,4 +50,30 @@
             margin-bottom: 30px;
     }
 
+    .rw-list-empty, .rw-list-option, .rw-list-optgroup {
+        padding: 0.5em 0.75em;
+        outline: 0;
+    }
+    .hide-button {
+        max-width: 300px;
+    }
+    .text-center .hide-button {
+            margin: 0 auto;
+
+    }
+    .hide-button .rw-dropdown-list > .rw-widget-input.rw-widget-picker.rw-widget-container {
+        display: none;
+    }
+    .rw-list-option.rw-state-focus, .rw-list-option.rw-state-focus:hover {
+         border: none;
+    }
+    .rw-dropdown-list{
+        text-align: left;
+    }
+
+    .rw-list-option.highlight{
+        font-weight: bold;
+        border-top: 1px solid $popup-border;
+    }
+
 }

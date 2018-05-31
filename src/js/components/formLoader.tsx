@@ -8,7 +8,9 @@ import FlipMove from 'react-flip-move';
 import { render, showPreview, showComplete, showConfirmation, showRestore, setWizardPage } from '../actions';
 import PDF from 'react-pdf-component/lib/react-pdf';
 import Loading from './loading';
-import * as DateTimePicker from 'react-widgets/lib/DateTimePicker'
+import * as DateTimePicker from 'react-widgets/lib/DateTimePicker';
+import * as DropdownList from 'react-widgets/lib/DropdownList';
+import * as ReactWidgetList from 'react-widgets/lib/List';
 import * as moment from 'moment';
 
 export const required = (value : any) => (value ? undefined : 'Required')
@@ -19,54 +21,99 @@ function isCheckbox(enums : (string | boolean)[]) {
 
 const INITIAL_VALUES = {
 
-
-        "civNumber": "CIV X",
-        "copyTo": [],
-        "dateString": "1 May 2018",
-        "defendants": [
+    "civNumber": "CIV X",
+    "copyTo": [],
+    "dateString": "1 May 2018",
+    "defendants": [
+        {
+            "_keyIndex": 8,
+            "name": "Mike Defendant"
+        }
+    ],
+    "depositAmount": "2",
+    "documents": [
+        {
+            "_keyIndex": 9,
+            "name": "1234123412"
+        }
+    ],
+    "filename": "Vendors Settlement Statement",
+    "filingFee": {
+        "amount": "323243",
+        "include": true
+    },
+    "matter": {
+        "assets": [
+            {
+                "_keyIndex": 11,
+                "address": "x",
+                "registry": "z",
+                "uniqueIdentifier": "y"
+            }
+        ],
+        "matterId": "234"
+    },
+    "plantiffs": [
+        {
+            "_keyIndex": 10,
+            "name": "Barry Plantiff"
+        }
+    ],
+    "purchaseAmount": "1",
+    "purchaserNames": [
+        {
+            "_keyIndex": 13,
+            "name": "purch"
+        }
+    ],
+    "recipient": {
+        "contactMethod": {
+            "address": {
+                "country": "New Zealand"
+            },
+            "email": "pewpwe@email.com",
+            "method": "email"
+        },
+        "individuals": [
             {
                 "_keyIndex": 6,
-                "name": "Mike Defendant"
+                "firstName": "Test",
+                "surname": "Name"
             }
         ],
-        "documents": [
-            {
-                "_keyIndex": 7,
-                "name": "1234123412"
-            }
-        ],
-        "filename": "Filing Letter",
-        "filingFee": {"include": true, "amount": "323243"},
-        "plantiffs": [
-            {
-                "_keyIndex": 5,
-                "name": "Barry Plantiff"
-            }
-        ],
-        "recipient": {
-            "contactMethod": {
-                "address": {
-                    "country": "New Zealand"
-                },
-                "email": "pewpwe@email.com",
-                "method": "email"
-            },
-            "individuals": [
-                {
-                    "_keyIndex": 3,
-                    "firstName": "Test",
-                    "surname": "Name"
-                }
-            ],
-            "recipientType": "individuals"
+        "recipientType": "individuals"
+    },
+    "senders": [
+        {
+            "_keyIndex": 7,
+            "email": "asdf",
+            "firstName": "x"
+        }
+    ],
+    "settlementStatement": {
+        "levies": {
+            "include": false,
+            "instalmentsPaid": {}
         },
-        "senders": [
-            {
-                "_keyIndex": 4,
-                "email": "asdf",
-                "firstName": "x"
-            }
-        ]
+        "rates": {
+            "amount": "1",
+            "annumRate": "1",
+            "days": "1",
+            "instalmentsPaid": {
+                "paid": false
+            },
+            "localAuthourity": "1"
+        },
+        "totalAmount": "2",
+        "totalCredits": "1",
+        "totalDebits": "2"
+    },
+    "vendorNames": [
+        {
+            "_keyIndex": 12,
+            "name": "vend"
+        }
+    ]
 
 } as any;
 
@@ -76,6 +123,57 @@ interface SuggestionProps {
     selector: Jason.SelectorType;
     context?: any;
     fieldNames: string[],
+}
+
+const DROPDOWN_LIST_SIZE = 0;
+
+
+interface DropdownSuggestionListProps {
+    data: any[];
+    onSelect: (value: any) => void;
+    buttonText?: string;
+    showCustom?: boolean;
+}
+
+
+class SelectList extends React.PureComponent<any>{
+    render(){
+        return <div >
+            <ReactWidgetList {...this.props} />
+            <ul className="rw-list">
+             <li className="rw-list-option highlight" onClick={() => this.props.onSelect({})}>Custom</li>
+             </ul>
+        </div>
+    }
+}
+
+class DropdownSuggestionList extends React.PureComponent<DropdownSuggestionListProps, {open: boolean}> {
+    constructor(props: DropdownSuggestionListProps) {
+        super(props);
+        this.state = {open: false};
+    }
+
+    render() {
+        let { open } = this.state;
+        let toggleWidget = () => this.setState({ open: !open });
+        const showCustom = this.props.showCustom;
+        return <div className="hide-button">
+            <Button onClick={() => { !this.state.open && this.setState({open : true})}}>{ this.props.buttonText || ''} <span className="caret"></span></Button>
+            <DropdownList
+              open={open}
+              filter
+              data={this.props.data}
+              listComponent={showCustom ? SelectList : ReactWidgetList}
+              textField={'title'}
+              value={''}
+              onToggle={toggleWidget}
+              onSelect={(e) => {
+                  this.props.onSelect(e.value);
+                  this.setState({open: false})
+              }}
+            />
+            </div>
+    }
 }
 
 const OverlayMenuItem = (props: {key: number, item: any,  onSelect?: () => void; handleSelect: (value: any) => void}) => {
@@ -89,6 +187,10 @@ const OverlayMenuItem = (props: {key: number, item: any,  onSelect?: () => void;
 
 
 class UnconnectedSuggestions extends React.PureComponent<SuggestionProps> {
+    constructor(props: SuggestionProps) {
+        super(props);
+        this.change = this.change.bind(this);
+    }
     change(values: any) {
         this.props.fieldNames.map((name: string) => {
             const field = (this.props as any)[name] as any;
@@ -111,11 +213,14 @@ class UnconnectedSuggestions extends React.PureComponent<SuggestionProps> {
                     <ControlLabel>Lookup</ControlLabel>
                 </Col>
                 <Col sm={7}>
-                <DropdownButton title={''} id={name}>
-                { (suggestionList).map((sug: any, index: number) => {
-                    return <OverlayMenuItem key={index} item={sug} handleSelect={() => this.change(sug.value)} />
-                }) }
-            </DropdownButton>
+                { suggestionList.length >= DROPDOWN_LIST_SIZE &&
+                    <DropdownSuggestionList data={suggestionList} onSelect={this.change} />
+                }
+                { suggestionList.length < DROPDOWN_LIST_SIZE && <DropdownButton title={''} id={name}>
+                    { (suggestionList).map((sug: any, index: number) => {
+                        return <OverlayMenuItem key={index} item={sug} handleSelect={() => this.change(sug.value)} />
+                    }) }
+                  </DropdownButton> }
             </Col>
             </FormGroup>
         }
@@ -323,13 +428,18 @@ class FieldsArray extends React.PureComponent<any> {
             if(sourcePath){
                 suggestionList = getFromContext(sourcePath, this.props.context) || [];
             }
-            return <DropdownButton title={ addItem(field) } id={fields.name}>
-                { (suggestionList).map((sug: any, index: number) => {
-                 return <OverlayMenuItem key={index} item={sug} handleSelect={() => fields.push({_keyIndex: getKey(), ...sug.value})} />
-                }) }
-                 <MenuItem divider />
-                 <MenuItem eventKey={suggestionList.length} onSelect={() => fields.push({_keyIndex: getKey()})}>Custom</MenuItem>
-            </DropdownButton>
+            if(suggestionList.length < DROPDOWN_LIST_SIZE) {
+                 return <DropdownButton title={ addItem(field) } id={fields.name}>
+                    { (suggestionList).map((sug: any, index: number) => {
+                     return <OverlayMenuItem key={index} item={sug} handleSelect={() => fields.push({_keyIndex: getKey(), ...sug.value})} />
+                    }) }
+                     <MenuItem divider />
+                     <MenuItem eventKey={suggestionList.length} onSelect={() => fields.push({_keyIndex: getKey()})}>Custom</MenuItem>
+                </DropdownButton>
+            }
+            else{
+                return <DropdownSuggestionList showCustom={true} data={suggestionList} onSelect={(sug) => fields.push({_keyIndex: getKey(), ...sug})} buttonText={addItem(field)}/>
+            }
         }
         return <Button onClick={() => fields.push({_keyIndex: getKey()})}>
                  { addItem(field) }

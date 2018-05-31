@@ -255,6 +255,14 @@ declare module 'react-pdf-component/lib/react-pdf' {
     }
 }
 
+declare module 'react-widgets/lib/List' {
+    class List extends React.PureComponent<any> {
+
+    }
+    namespace List {}
+    export = List;
+}
+
 declare module 'react-widgets-moment' {
     function momentLocalizer(moment : any): void;
     namespace momentLocalizer {}
