@@ -861,9 +861,12 @@ export const NumberFieldRow = FieldRow(NumberField);
 
 class SchemaField extends React.PureComponent<WrappedFieldProps & {category: string}> {
     render() {
+        const keys = Object.keys(templateSchemas[this.props.category].schemas);
+        keys.sort((a, b) => templateSchemas[this.props.category].schemas[a].schema.title
+                  .localeCompare(templateSchemas[this.props.category].schemas[b].schema.title));
         return <SelectField meta={this.props.meta} input={this.props.input}>
         { !templateSchemas[this.props.category].schemas[this.props.input.value] && <option value={this.props.input.value} disabled>Please select...</option> }
-            { Object.keys(templateSchemas[this.props.category].schemas).map((key: string) => {
+            { keys.map((key: string) => {
                 return <option key={key} value={key}>{ templateSchemas[this.props.category].schemas[key].schema.title }</option>
             }) }
         </SelectField>
