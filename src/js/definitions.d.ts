@@ -43,6 +43,7 @@ declare namespace Jason {
         title?: string;
         formName?: string;
         description?: string;
+        category?: string;
         definitions: any,
         properties: SchemaProperties & any,
         oneOf?: any[];

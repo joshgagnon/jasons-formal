@@ -1,4 +1,5 @@
-import * as React from "react";
+import * as React  from "react";
+import  { Fragment } from "react";
 import { reduxForm, InjectedFormProps, Field, Fields, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector, getFormValues, initialize, touch, getFormSyncErrors, isDirty } from 'redux-form';
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
@@ -200,6 +201,7 @@ class UnconnectedSuggestions extends React.PureComponent<SuggestionProps> {
     render() {
         const { schema, selector, name } = this.props;
         let suggestionList = suggestions(schema);
+
         if(suggestionList){
             const sourcePath = inputSource(schema);
             if(sourcePath){
@@ -858,17 +860,43 @@ export const DateFieldRow = FieldRow(DateField);
 export const CheckboxFieldRow = FieldRow(CheckboxField);
 export const NumberFieldRow = FieldRow(NumberField);
 
+interface OptionListProps {
+    keys: string[],
+    schemas: any
+}
+
+const OptionList = (props: OptionListProps) => {
+    const { keys, schemas } = props;
+    keys.sort((a:string, b:string) => schemas[a].schema.title.localeCompare(schemas[b].schema.title));
+    return <Fragment>
+    { keys.map((key: string) => {
+            return <option key={key} value={key}>{ schemas[key].schema.title }</option>
+        }) }
+    </Fragment>
+}
 
 class SchemaField extends React.PureComponent<WrappedFieldProps & {category: string}> {
     render() {
         const keys = Object.keys(templateSchemas[this.props.category].schemas);
-        keys.sort((a, b) => templateSchemas[this.props.category].schemas[a].schema.title
-                  .localeCompare(templateSchemas[this.props.category].schemas[b].schema.title));
+        const categories = keys.reduce((result: any, key: string) => {
+            const category = templateSchemas[this.props.category].schemas[key].schema.category;
+            result[category] = [...(result[category] || []), key];
+            return result;
+        }, {});
+        const categoryKeys = Object.keys(categories).sort();
+
         return <SelectField meta={this.props.meta} input={this.props.input}>
         { !templateSchemas[this.props.category].schemas[this.props.input.value] && <option value={this.props.input.value} disabled>Please select...</option> }
-            { keys.map((key: string) => {
-                return <option key={key} value={key}>{ templateSchemas[this.props.category].schemas[key].schema.title }</option>
+            { categoryKeys.map((category: string) => {
+                const options = <OptionList keys={categories[category]} schemas={templateSchemas[this.props.category].schemas} />
+                if(category !== "undefined"){
+                    return <optgroup label={category}>
+                        { options }
+                        </optgroup>
+                }
+                return options;
             }) }
+
         </SelectField>
     }
 }
