@@ -10,6 +10,7 @@ function loadAll(context: any) : {[key: string] : any}{
     } catch(e) {
         definitions = {};
     }
+
     return context.keys().reduce((acc: any, key: string) => {
         if(context(key) !== definitions && key.indexOf('.json') === -1){
             try{
@@ -32,17 +33,27 @@ function loadAll(context: any) : {[key: string] : any}{
     }, {});
 }
 
+function loadCategories(context: any) {
+    let ordering : string[];
+    try{
+        ordering = context('./ordering');
+    } catch(e) {
+        ordering = [];
+    }
+    return { ordering }
 
+}
 
 const templateSchemas : Jason.TemplateSchemas = {
     'Evolution Templates': {
         schemas: loadAll(schemas),
-        name: 'el'
-    },
+        name: 'el',
+        categories: loadCategories(require.context('el-templates/categories'))
+    }/*,
     'Good Companies': {
         schemas: loadAll(gc),
         name: 'gc'
-    }
+    }*/
 }
 
 console.log(templateSchemas);

@@ -60,6 +60,9 @@ declare namespace Jason {
                 validate: Validate,
                 validatePages: Validate[]
                 }
+            },
+            categories?: {
+                ordering: string[]
             }
         }
     }
