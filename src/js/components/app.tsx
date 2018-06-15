@@ -7,6 +7,13 @@ import * as momentLocalizer from 'react-widgets-moment';
 
 momentLocalizer(moment);
 
+class AddDocuments extends React.PureComponent<{values: {fileType: string}}> {
+    render() {
+        return <div> hi</div>
+    }
+}
+
+
 export class App extends React.PureComponent<{}> {
     render() {
         return <div>
@@ -30,7 +37,7 @@ export class App extends React.PureComponent<{}> {
 
 
             }} />
-            <Modals />
+            <Modals fileFormatExtras={AddDocuments}/>
         </div>
 
     }

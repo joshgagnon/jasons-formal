@@ -134,7 +134,8 @@ declare namespace Jason.Actions {
     }
 
     interface RenderPayload {
-        data: any
+        data: any;
+        documentsToAppend?: any;
     }
 
     interface Render extends ActionCreator<RenderPayload> {}

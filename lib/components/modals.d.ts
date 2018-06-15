@@ -43,7 +43,10 @@ export declare class PreviewModal extends React.PureComponent<{
 }> {
     render(): JSX.Element;
 }
-export declare class FileFormat extends React.PureComponent<{}> {
+export declare class FileFormat extends React.PureComponent<{
+    fileFormatExtras?: React.ComponentClass;
+    getFileValues: () => any;
+}> {
     render(): JSX.Element;
 }
 export declare class Complete extends React.PureComponent<{
@@ -53,6 +56,7 @@ export declare class Complete extends React.PureComponent<{
     getValues: () => any;
     getFileValues: () => any;
     download: (data: any) => void;
+    fileFormatExtras?: React.ComponentClass;
 }> {
     constructor(props: any);
     download(): void;
@@ -61,6 +65,7 @@ export declare class Complete extends React.PureComponent<{
 export declare class Modals extends React.PureComponent<{
     downloading: boolean;
     showing: string;
+    fileFormatExtras?: React.ComponentClass;
 }> {
     render(): false | JSX.Element;
 }

@@ -248,25 +248,34 @@ const ConnectedPreviewModal = connect(undefined, {
 })(PreviewModal as any)
 
 
-export class FileFormat extends React.PureComponent<{}> {
+export class FileFormat extends React.PureComponent<{fileFormatExtras?: React.ComponentClass, getFileValues: () => any}> {
     render() {
+        const FileFormatExtras = this.props.fileFormatExtras as any;
         return <Form  horizontal>
          <Field title={'File Name'} name={'filename'} component={TextFieldRow}/>
            <Field title={'File Type'} name={'fileType'} component={ToggleButtonFieldRow}  columnWidth={9}>
             <ToggleButton value="docx"><i className="fa fa-file-word-o"/> Word (.docx)</ToggleButton>
             <ToggleButton value="pdf"><i className="fa fa-file-pdf-o"/> PDF (.pdf)</ToggleButton>
-            <ToggleButton value="odt"><i className="fa fa-file-text-o"/>  OpenDocument (.odt)</ToggleButton>
+            <ToggleButton value="odt"><i className="fa fa-file-text-o"/>  ODT (.odt)</ToggleButton>
          </Field>
-
+          {  FileFormatExtras &&  <FileFormatExtras values={this.props.getFileValues()} /> }
         </Form>
     }
 }
 
 const FileFormatForm = reduxForm<{}>({
     form: 'fileFormat'
-})(FileFormat as any);
+})(FileFormat as any) as any;
 
-export class Complete extends React.PureComponent<{handleClose: () => void, schemaName: string, category: string, getValues : () => any,  getFileValues : () => any, download : (data: any) => void}> {
+export class Complete extends React.PureComponent<{
+    handleClose: () => void,
+    schemaName: string,
+    category: string,
+    getValues : () => any,
+    getFileValues : () => any,
+    download : (data: any) => void,
+    fileFormatExtras?: React.ComponentClass
+    }> {
 
     constructor(props: any){
         super(props);
@@ -287,7 +296,7 @@ export class Complete extends React.PureComponent<{handleClose: () => void, sche
                     <Modal.Title>Complete Document</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                   <FileFormatForm ref="form" initialValues={{fileType: 'docx', filename}} />
+                   <FileFormatForm ref="form" initialValues={{fileType: 'docx', filename}} fileFormatExtras={this.props.fileFormatExtras} getFileValues={this.props.getFileValues}/>
                     <div className="icon-action-page">
                     <div className="actionable select-button" onClick={this.download}>
                         <Glyphicon glyph='download'/>
@@ -313,7 +322,7 @@ export class Complete extends React.PureComponent<{handleClose: () => void, sche
 
 }
 
-const ConnectedComplete = connect((state: Jason.State) => {
+const ConnectedComplete = connect<{}, {}, {fileFormatExtras?: React.ComponentClass}>((state: Jason.State) => {
     const formLoader = getFormValues('formLoader')(state) as any;
 
     return {
@@ -328,7 +337,7 @@ const ConnectedComplete = connect((state: Jason.State) => {
 })(Complete as any)
 
 
-export class Modals extends React.PureComponent<{downloading: boolean, showing: string}> {
+export class Modals extends React.PureComponent<{downloading: boolean, showing: string, fileFormatExtras?: React.ComponentClass}> {
     render() {
         if(this.props.showing === 'preview'){
             return <ConnectedPreviewModal />
@@ -349,7 +358,7 @@ export class Modals extends React.PureComponent<{downloading: boolean, showing: 
             return <ConnectedRestore />
         }
         if(this.props.showing === 'complete'){
-            return <ConnectedComplete />
+            return <ConnectedComplete fileFormatExtras={this.props.fileFormatExtras}/>
         }
         return false;
     }

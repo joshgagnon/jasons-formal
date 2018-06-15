@@ -40,16 +40,36 @@ export function *downloadSaga() : any {
         yield put(updateRender({
             downloadStatus: Jason.DownloadStatus.InProgress
         }));
-        let data;
+        let data = action.payload as any, response;
         try {
-            const response = yield call(axios.post, `/api/render`, action.payload, {responseType: 'arraybuffer' });
-            data = response.data;
+
+            if(data.documentsToAppend){
+                const body = new FormData();
+                const json = {...data, documentsToAppend: null};
+                body.append('json', JSON.stringify(json));
+                data.documentsToAppend.map((d: any) => {
+                    if(d.id){
+                        body.append('documentsToAppend[]', d.id);
+                    }
+                    else{
+                        body.append('newDocumentsToAppend[]', d, d.name);
+                    }
+                });
+
+                response = yield call(axios.post, '/api/render', body, {responseType: 'arraybuffer' });
+            }
+            else {
+
+                response = yield call(axios.post, '/api/render', data, {responseType: 'arraybuffer' });
+            }
+
+            const responseData = response.data;
             yield put(updateRender({
                 downloadStatus: Jason.DownloadStatus.Complete,
-                data
+                data: responseData
             }));
 
-            var blob = new Blob([data], {type: response.headers['content-type']});
+            var blob = new Blob([responseData], {type: response.headers['content-type']});
             const disposition = response.headers['content-disposition'];
             const filename = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition)[1].replace(/"/g, '');
             Filesaver.saveAs(blob, filename);
