@@ -47,12 +47,12 @@ export function *downloadSaga() : any {
                 const body = new FormData();
                 const json = {...data, documentsToAppend: null};
                 body.append('json', JSON.stringify(json));
-                data.documentsToAppend.map((d: any) => {
+                data.documentsToAppend.map((d: any, index: number) => {
                     if(d.id){
-                        body.append('documentsToAppend[]', d.id);
+                        body.append('existingDocumentsToAppend[]', JSON.stringify({...d, index }));
                     }
                     else{
-                        body.append('newDocumentsToAppend[]', d, d.name);
+                        body.append('documentsToAppend[]', d, d.name);
                     }
                 });
 

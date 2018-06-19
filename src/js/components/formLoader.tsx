@@ -361,15 +361,16 @@ class FieldsArray extends React.PureComponent<any> {
             { title && <legend>{ title }</legend>}
             <FlipMove duration={250} easing="ease-out">
             { fields.map((name: any, index: number) => {
+
                 return <div key={fields.get(index)._keyIndex} className="list-item">
                     <div style={{position: 'relative', minHeight: inline ? 0 : 70}}>
-                    <RenderField  name={name} field={field} selector={selector} index={index} context={this.props.context} />
+                    <RenderField key={fields.get(index)._keyIndex + ' ' + index} name={name} field={field} selector={selector} index={index} context={this.props.context} />
                     <ListItemControls fields={fields} index={index} numItems={fields.length} name={name} inline={inline}/>
                     </div>
                     { index < fields.length - 1 && <hr/>}
                 </div>
             }) }
-            </FlipMove>
+           </FlipMove>
             { this.props.meta.error && <div className="alert alert-danger">
                 { (this.props.meta.error as any).map((error: string, index: number) => <div key={index}>{ error } </div>) }
             </div> }
