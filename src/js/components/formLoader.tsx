@@ -100,6 +100,7 @@ class UnconnectedSuggestions extends React.PureComponent<SuggestionProps> {
         this.change = this.change.bind(this);
     }
     change(values: any) {
+        ///registerField?
         this.props.fieldNames.map((name: string) => {
             const field = (this.props as any)[name] as any;
             field.input.onChange(values[name]);
@@ -167,7 +168,7 @@ class UnconnectedFormSet extends React.PureComponent<FormSetProps> {
         }
         let keys = Object.keys(schemaProps);
         if(subSchema){
-            keys = keys.concat(Object.keys(subSchema));
+            keys = keys.concat(Object.keys(subSchema.properties));
         }
         return (
             <fieldset>
@@ -227,13 +228,14 @@ class RenderField extends React.PureComponent<{field: any, name: string, index?:
             }
             case 'string': {
                 const subType = componentType(field);
+
                 switch(subType){
                     case 'textarea':
-                        return <Field title={title} name={name} component={TextAreaFieldRow} context={this.props.context} />
+                        return <Field title={title} name={name} component={TextAreaFieldRow} context={this.props.context}/>
                     case 'date':
                         return <Field title={title} name={name} component={DateFieldRow} formatDate={field.formatDate} context={this.props.context}/>
                     default:
-                        return <Field title={title} name={name} component={TextFieldRow} context={this.props.context}/>
+                        return <Field title={title} name={name} component={TextFieldRow} context={this.props.context}  disabled={field.readOnly}/>
                 }
             }
             case 'number': {
@@ -735,9 +737,9 @@ class CheckboxField extends React.PureComponent<WrappedFieldProps> {
     }
 }
 
-class TextField extends React.PureComponent<WrappedFieldProps> {
+class TextField extends React.PureComponent<WrappedFieldProps & {disabled?: boolean}> {
     render() {
-        return <FormControl {...this.props.input} componentClass="input" />
+        return <FormControl {...this.props.input} componentClass="input" disabled={this.props.disabled}/>
     }
 }
 
