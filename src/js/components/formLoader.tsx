@@ -168,7 +168,7 @@ class UnconnectedFormSet extends React.PureComponent<FormSetProps> {
         }
         let keys = Object.keys(schemaProps);
         if(subSchema){
-            keys = keys.concat(Object.keys(subSchema.properties));
+            keys = keys.concat(Object.keys(subSchema));
         }
         return (
             <fieldset>
