@@ -56,7 +56,7 @@
     "html-webpack-plugin": "^2.30.1",
     "isomorphic-fetch": "^2.2.1",
     "json-schemer": "github:joshgagnon/json-schemer",
-    "moment": "^2.21.0",
+    "moment": "^2.29.4",
     "node-sass": "^4.7.2",
     "postcss-loader": "^2.0.9",
     "react": "^16.2.0",
