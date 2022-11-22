@@ -1,15 +1,11 @@
 import * as React from "react";
-import { reduxForm, InjectedFormProps, Field, WrappedFieldProps, formValues, FormSection, FieldArray, formValueSelector, getFormValues } from 'redux-form';
+import { getFormValues } from 'redux-form';
 import { connect } from 'react-redux';
 import templateSchemas from '../schemas';
-import { FormGroup, ControlLabel, FormControl, Form, Col, Grid, Tabs, Tab, Button, Glyphicon, ProgressBar } from 'react-bootstrap';
-import { componentType, getKey, addItem, setDefaults, getValidate, controlStyle, formatString } from 'json-schemer';
-import FlipMove from 'react-flip-move';
 import { render, showPreview } from '../actions';
 import PDF from 'react-pdf-component/lib/react-pdf';
 import Loading from './loading';
-import * as DateTimePicker from 'react-widgets/lib/DateTimePicker'
-import * as moment from 'moment';
+
 
 export function buildRenderObject(filename: string, category: string, schemaName: string, values : any, metadata = {}){
     const type = templateSchemas[category].schemas[schemaName];

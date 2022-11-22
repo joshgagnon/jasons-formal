@@ -805,7 +805,9 @@ class SchemaField extends React.PureComponent<WrappedFieldProps & {category: str
         else{
             categoryKeys.sort();
         }
-
+        const schema = templateSchemas[this.props.category] as any;
+        //const title = schema[this.props.input.value] ? schema[this.props.input.value].schema.title : 'Please Select...'
+        //return <DropdownSuggestionList showCustom data={categoryKeys} buttonText={title} onSelect={this.props.input.onChange} />
 
         return <SelectField meta={this.props.meta} input={this.props.input}>
         { !templateSchemas[this.props.category].schemas[this.props.input.value] && <option value={this.props.input.value} disabled>Please select...</option> }
