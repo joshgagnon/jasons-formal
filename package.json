@@ -57,7 +57,7 @@
     "isomorphic-fetch": "^2.2.1",
     "json-schemer": "github:joshgagnon/json-schemer",
     "moment": "^2.21.0",
-    "node-sass": "^4.7.2",
+    "node-sass": "^7.0.0",
     "postcss-loader": "^2.0.9",
     "react": "^16.2.0",
     "react-bootstrap": "^0.31.5",
